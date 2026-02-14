@@ -38,8 +38,8 @@ export function Contact() {
         <h2 className="font-sans font-semibold text-ink-900">Aminomarket</h2>
         <p className="mt-2 text-ink-600">11323 Arcade Dr. STE 105, Little Rock, AR 72212</p>
         <p className="mt-2">
-          <a href="mailto:info@aminomarket.shop" className="text-ink-900 underline underline-offset-2 hover:text-accent-dark">
-            info@aminomarket.shop
+          <a href="mailto:aminomarketshop@gmail.com" className="text-ink-900 underline underline-offset-2 hover:text-accent-dark">
+            aminomarketshop@gmail.com
           </a>
         </p>
         <p className="text-ink-600">+1 877 312 1560</p>

@@ -48,10 +48,10 @@ export function Footer() {
               <p>Little Rock, AR 72212</p>
               <p className="mt-2">
                 <a
-                  href="mailto:info@aminomarket.shop"
+                  href="mailto:aminomarketshop@gmail.com"
                   className="text-ink-900 underline underline-offset-2 hover:text-accent-dark"
                 >
-                  info@aminomarket.shop
+                  aminomarketshop@gmail.com
                 </a>
               </p>
               <p>+1 877 312 1560</p>

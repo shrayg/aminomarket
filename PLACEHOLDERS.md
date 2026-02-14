@@ -20,7 +20,7 @@ These appear in the Footer and Contact page.
 
 - [ ] **Company name** — (currently: Aminomarket)
 - [ ] **Street address** — (currently: 11323 Arcade Dr. STE 105, Little Rock, AR 72212)
-- [ ] **Email** — (currently: info@aminomarket.shop)
+- [ ] **Email** — (currently: aminomarketshop@gmail.com)
 - [ ] **Phone** — (currently: +1 877 312 1560)
 - [ ] **Hours** — (currently: Mon–Fri, 9am–5pm GMT-6)
 
