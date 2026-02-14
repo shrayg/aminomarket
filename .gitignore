@@ -19,6 +19,12 @@
 
 # production
 /build
+/dist
+
+# server
+server/node_modules
+server/prisma/*.db
+server/prisma/prisma/*.db
 
 # misc
 .DS_Store
