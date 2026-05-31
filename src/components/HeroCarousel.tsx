@@ -37,24 +37,38 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
 
   return (
     <div
-      className="relative h-full min-h-[400px] w-full overflow-hidden bg-gradient-to-br from-[#2a2c33] via-[#1f2126] to-[#15171c]"
+      className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-[#2a2c33] via-[#1f2126] to-[#15171c] px-8 py-10"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
-      <div className="absolute inset-0 flex items-center justify-center p-12">
+      <div className="flex w-full flex-1 items-center justify-center">
         <img
           src={slide.image}
           alt={slide.title}
-          className="max-h-full max-w-full object-contain drop-shadow-2xl transition-opacity duration-500"
+          className="h-auto max-h-[340px] w-auto max-w-[260px] object-contain drop-shadow-2xl"
           key={slide.image}
         />
       </div>
 
-      <div className="absolute inset-x-0 bottom-0 flex flex-col items-center gap-4 bg-gradient-to-t from-black/80 via-black/40 to-transparent px-6 py-8 text-center">
-        <p className="font-sans text-sm font-semibold uppercase tracking-widest text-white/90">
+      <div className="mt-6 flex w-full flex-col items-center gap-3 text-center">
+        <p className="font-sans text-xs font-semibold uppercase tracking-widest text-white/80">
           {slide.title}
         </p>
         <CTAButton slide={slide} />
+        {slides.length > 1 && (
+          <div className="mt-2 flex gap-1.5">
+            {slides.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrent(i)}
+                className={`h-1.5 rounded-full transition ${
+                  i === current ? 'w-5 bg-[#c9a227]' : 'w-1.5 bg-white/40 hover:bg-white/70'
+                }`}
+                aria-label={`Slide ${i + 1}`}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {slides.length > 1 && (
@@ -73,18 +87,6 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
           >
             <ChevronRight className="h-5 w-5" />
           </button>
-          <div className="absolute bottom-32 left-1/2 flex -translate-x-1/2 gap-2">
-            {slides.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setCurrent(i)}
-                className={`h-2 w-2 rounded-full transition ${
-                  i === current ? 'w-6 bg-[#c9a227]' : 'bg-white/40 hover:bg-white/70'
-                }`}
-                aria-label={`Slide ${i + 1}`}
-              />
-            ))}
-          </div>
         </>
       )}
     </div>

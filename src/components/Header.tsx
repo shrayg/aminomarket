@@ -46,7 +46,7 @@ export function Header() {
       </div>
 
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4">
-        <Logo variant="light" height="md" />
+        <Logo variant="light" height="md" withText />
 
         <nav className="hidden items-center gap-8 lg:flex">
           {navLinks.map((link) =>
