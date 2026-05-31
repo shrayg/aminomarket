@@ -295,3 +295,5 @@ export function getStartingPrice(product: Product): number {
   }
   return product.price
 }
+
+export { generatedProductImages } from './generatedProductImages'
