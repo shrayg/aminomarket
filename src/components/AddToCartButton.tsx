@@ -1,7 +1,13 @@
 import { useState } from 'react'
-import { ShoppingCart, Check } from 'lucide-react'
+import { ShoppingCart, Check, Minus, Plus } from 'lucide-react'
 import { useCartStore } from '@/store/cart'
 import type { Product, ProductVariant } from '@/data/products'
+
+const MIN_QTY = 1
+const MAX_QTY = 99
+
+const clampQty = (n: number) =>
+  Math.min(MAX_QTY, Math.max(MIN_QTY, Number.isFinite(n) ? Math.floor(n) : MIN_QTY))
 
 export function AddToCartButton({
   product,
@@ -37,24 +43,48 @@ export function AddToCartButton({
     setTimeout(() => setAdded(false), 1500)
   }
 
+  const decrement = () => setQuantity((q) => clampQty(q - 1))
+  const increment = () => setQuantity((q) => clampQty(q + 1))
+
   return (
     <div className={`flex items-stretch gap-2 ${className}`}>
-      <label className="flex shrink-0 items-center gap-2 border-2 border-ink-200 bg-white px-3 font-sans text-xs font-semibold uppercase tracking-wider text-ink-600">
-        <span>Qty</span>
+      <div
+        role="group"
+        aria-label={`Quantity for ${name}`}
+        className="flex shrink-0 items-stretch border-2 border-ink-200 bg-white"
+      >
+        <button
+          type="button"
+          onClick={decrement}
+          disabled={quantity <= MIN_QTY}
+          aria-label="Decrease quantity"
+          className="flex w-9 items-center justify-center text-ink-600 transition hover:bg-ink-50 hover:text-ink-900 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          <Minus className="h-4 w-4" />
+        </button>
         <input
           type="number"
-          min="1"
-          max="99"
+          min={MIN_QTY}
+          max={MAX_QTY}
           inputMode="numeric"
           value={quantity}
           onChange={(event) => {
             const next = Number.parseInt(event.target.value, 10)
-            setQuantity(Number.isFinite(next) ? Math.min(99, Math.max(1, next)) : 1)
+            setQuantity(clampQty(next))
           }}
-          className="w-8 bg-transparent text-center text-sm font-bold text-ink-900 outline-none"
+          className="w-10 border-x border-ink-200 bg-transparent text-center text-sm font-bold text-ink-900 outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
           aria-label={`Quantity of ${name}`}
         />
-      </label>
+        <button
+          type="button"
+          onClick={increment}
+          disabled={quantity >= MAX_QTY}
+          aria-label="Increase quantity"
+          className="flex w-9 items-center justify-center text-ink-600 transition hover:bg-ink-50 hover:text-ink-900 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          <Plus className="h-4 w-4" />
+        </button>
+      </div>
       <button
         type="button"
         onClick={handleClick}
