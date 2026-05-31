@@ -7,6 +7,8 @@
     "dev": "vite",
     "server": "cd server && npm run dev",
     "server:start": "cd server && npm start",
+    "stripe:sync": "node scripts/sync-stripe-catalog.mjs",
+    "stripe:webhook": "node scripts/register-stripe-webhook.mjs",
     "build": "prisma generate --schema=server/prisma/schema.prisma && tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"

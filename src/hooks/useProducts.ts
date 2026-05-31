@@ -7,6 +7,21 @@ function filterByCategory(list: Product[], category?: string) {
   return list.filter((p) => p.categorySlug === category)
 }
 
+function mergeCatalogProduct(product: Product, apiProduct?: Product): Product {
+  if (!apiProduct) return product
+  return {
+    ...product,
+    inStock: apiProduct.inStock,
+    isFeatured: apiProduct.isFeatured,
+    isPreSale: apiProduct.isPreSale,
+  }
+}
+
+function mergeCatalog(list: Product[], apiList: Product[]) {
+  const apiBySlug = new Map(apiList.map((product) => [product.slug, product]))
+  return list.map((product) => mergeCatalogProduct(product, apiBySlug.get(product.slug)))
+}
+
 export function useProducts(category?: string) {
   const initial = useMemo(() => filterByCategory(staticProducts, category), [category])
   const [products, setProducts] = useState<Product[]>(initial)
@@ -21,7 +36,9 @@ export function useProducts(category?: string) {
       .then((data: unknown[]) => {
         if (cancelled) return
         const apiList = (data as Record<string, unknown>[]).map(normalizeProduct)
-        if (apiList.length > 0) setProducts(apiList)
+        if (apiList.length > 0) {
+          setProducts(mergeCatalog(filterByCategory(staticProducts, category), apiList))
+        }
       })
       .catch(() => {
         if (!cancelled) setProducts(filterByCategory(staticProducts, category))
@@ -54,7 +71,9 @@ export function useProduct(slug: string | undefined) {
       .get(slug)
       .then((data: Record<string, unknown>) => {
         if (cancelled) return
-        setProduct(normalizeProduct(data))
+        const apiProduct = normalizeProduct(data)
+        const catalogProduct = staticProducts.find((product) => product.slug === slug)
+        setProduct(catalogProduct ? mergeCatalogProduct(catalogProduct, apiProduct) : apiProduct)
       })
       .catch(() => {
         if (!cancelled) {

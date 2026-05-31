@@ -10,7 +10,8 @@ Full-stack e-commerce: **Vite + React + Tailwind** frontend + **Node.js/Express*
    - `DATABASE_URL` – PostgreSQL connection string (use [Neon](https://neon.tech) free tier or Vercel Postgres)
    - `JWT_SECRET` – random string for auth
    - `FRONTEND_URL` – `https://aminomarket.shop` (or your Vercel URL)
-   - `STRIPE_SECRET_KEY` – (optional) for Stripe checkout
+   - `STRIPE_SECRET_KEY` – server-side Stripe key for Checkout Sessions
+   - `STRIPE_WEBHOOK_SECRET` – signing secret for `https://aminomarket.shop/api/stripe/webhook`
 
 3. **Deploy** – Vercel will build the frontend and deploy the API as serverless functions.
 
@@ -24,12 +25,14 @@ Full-stack e-commerce: **Vite + React + Tailwind** frontend + **Node.js/Express*
 
 ### 1. Database
 
-Use PostgreSQL (Neon free tier, Docker, or local). Create `server/.env`:
+Use PostgreSQL (Neon free tier, Docker, or local). Add the variables to the root `.env`:
 
 ```
 DATABASE_URL="postgresql://user:pass@host:5432/db?sslmode=require"
 JWT_SECRET=dev-secret
 FRONTEND_URL=http://localhost:5173
+STRIPE_SECRET_KEY=sk_...
+STRIPE_WEBHOOK_SECRET=whsec_...
 ```
 
 ### 2. Backend
@@ -63,3 +66,5 @@ Open http://localhost:5173. The Vite dev server proxies `/api` to the backend.
 | `npm run dev` | Start frontend |
 | `npm run server` | Start backend |
 | `npm run build` | Build for production (Vercel) |
+| `npm run stripe:sync -- --apply --confirm-stripe-approval` | Create or update the Stripe Product and Price catalog from `catalog/products.json` |
+| `npm run stripe:webhook -- --apply --confirm-stripe-approval` | Register the production Stripe webhook and save its signing secret locally |

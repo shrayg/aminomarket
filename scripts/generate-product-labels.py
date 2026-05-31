@@ -22,6 +22,7 @@ class Variant:
 
 
 VARIANTS = [
+    Variant("glp-rt-50mg", "GLP-RT", "50mg"),
     Variant("bpc-157-2mg", "BPC-157", "2mg"),
     Variant("bpc-157-5mg", "BPC-157", "5mg"),
     Variant("bpc-157-10mg", "BPC-157", "10mg"),

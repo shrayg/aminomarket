@@ -41,7 +41,7 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(data),
     }),
-  checkout: (data: { items: { id: string; name: string; price: number; quantity: number }[]; email: string; shipping?: object }) =>
+  checkout: (data: { items: { id: string; quantity: number }[]; email: string; shipping?: object }) =>
     fetchApi('/checkout', {
       method: 'POST',
       body: JSON.stringify(data),

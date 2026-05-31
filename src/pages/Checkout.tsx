@@ -34,7 +34,7 @@ export function Checkout() {
     try {
       const { api } = await import('@/lib/api')
       const res = await api.checkout({
-        items: items.map((i) => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity })),
+        items: items.map((i) => ({ id: i.id, quantity: i.quantity })),
         email: form.email,
         shipping: form,
       })

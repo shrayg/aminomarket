@@ -6,6 +6,7 @@ import newsletterRouter from './routes/newsletter.js'
 import contactRouter from './routes/contact.js'
 import checkoutRouter from './routes/checkout.js'
 import ordersRouter from './routes/orders.js'
+import { stripeWebhook } from './routes/stripe-webhook.js'
 
 const app = express()
 
@@ -26,6 +27,7 @@ app.use(cors({
     cb(null, true)
   }
 }))
+app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), stripeWebhook)
 app.use(express.json())
 
 app.use('/api/products', productsRouter)

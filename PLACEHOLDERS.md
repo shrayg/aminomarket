@@ -10,7 +10,7 @@ Fill in each item and mark when done. Use this as a reference when sending conte
 - [ ] `JWT_SECRET` — Random secret string for auth (generate with `openssl rand -hex 32`)
 - [ ] `FRONTEND_URL` — Production URL, e.g. `https://aminomarket.shop`
 - [ ] `STRIPE_SECRET_KEY` — From Stripe Dashboard → Developers → API keys
-- [ ] `STRIPE_WEBHOOK_SECRET` — From Stripe Dashboard → Webhooks (when you add one)
+- [ ] `STRIPE_WEBHOOK_SECRET` — Webhook signing secret for `https://aminomarket.shop/api/stripe/webhook`
 
 ---
 
@@ -77,7 +77,7 @@ Track order: Order number
 - [ ] **Contact form** — Connect email service (Resend, SendGrid, etc.) in `server/routes/contact.js`
 - [ ] **Password reset** — Add reset flow in `ForgotPassword.tsx` and backend
 - [ ] **Order tracking** — Add tracking API in `TrackOrder.tsx` and backend
-- [ ] **Stripe checkout** — Configure when you add Stripe keys; checkout route is already wired
+- [ ] **Stripe checkout deployment** — Add `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` to Vercel, then deploy the current code
 
 ---
 
