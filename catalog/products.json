@@ -513,6 +513,38 @@
     ]
   },
   {
+    "id": "l-carnitine",
+    "name": "L-Carnitine",
+    "slug": "l-carnitine",
+    "price": 39,
+    "image": "/products/generated-l-carnitine-5000mg.webp",
+    "description": "L-Carnitine research reference material. Larger-format vial with the Aminomarket clinical label system.",
+    "category": "Research Formulations",
+    "categorySlug": "research-formulations",
+    "inStock": true,
+    "isFeatured": false,
+    "variants": [
+      { "id": "l-carnitine-5000", "dose": "5000mg", "price": 39, "image": "/products/generated-l-carnitine-5000mg.webp", "inStock": true },
+      { "id": "l-carnitine-500mg-per-ml-10ml", "dose": "500mg/mL 10mL", "price": 45, "image": "/products/generated-l-carnitine-500mg-per-ml-10ml.webp", "inStock": true }
+    ]
+  },
+  {
+    "id": "bacteriostatic-water",
+    "name": "Bacteriostatic Water",
+    "slug": "bacteriostatic-water",
+    "price": 2.5,
+    "image": "/products/generated-bacteriostatic-water-3ml.webp",
+    "description": "Bacteriostatic Water in larger-format Aminomarket vial packaging.",
+    "category": "Accessories",
+    "categorySlug": "accessories",
+    "inStock": true,
+    "isFeatured": false,
+    "variants": [
+      { "id": "bac-water-3ml", "dose": "3mL", "price": 2.5, "image": "/products/generated-bacteriostatic-water-3ml.webp", "inStock": true },
+      { "id": "bac-water-10ml", "dose": "10mL", "price": 3.15, "image": "/products/generated-bacteriostatic-water-10ml.webp", "inStock": true }
+    ]
+  },
+  {
     "id": "vial-case",
     "name": "AMP Vial Case - 10 Slot Secure Storage Box",
     "slug": "amp-vial-case",
