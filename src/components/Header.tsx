@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ShoppingCart, Menu, User, Search, ChevronDown } from 'lucide-react'
+import { Logo } from './Logo'
 import { useCartStore } from '@/store/cart'
 
 const navLinks = [
@@ -29,8 +30,9 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-ink-200/80 bg-white/95 backdrop-blur-md">
       {/* Announcement bar */}
-      <div className="bg-ink-950 px-4 py-2.5">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-4 gap-y-1 text-center text-sm text-white/95">
+      <div className="bg-ink-950 px-4 py-3">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-4 gap-y-2 text-center text-sm leading-normal text-white/95">
+          <Logo variant="dark" height="sm" />
           <span>Valentine&apos;s Week: 20% Off Peptides + BOGO Cosmetics (02/09–02/15)</span>
           <span className="hidden sm:inline">·</span>
           <span>Important Update — Tap to View</span>
@@ -44,9 +46,7 @@ export function Header() {
       </div>
 
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4">
-        <Link to="/" className="font-sans text-xl font-bold tracking-tight text-ink-900">
-          Aminomarket
-        </Link>
+        <Logo variant="light" height="md" />
 
         <nav className="hidden items-center gap-8 lg:flex">
           {navLinks.map((link) =>

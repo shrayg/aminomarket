@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Logo } from '@/components/Logo'
 
 export function Contact() {
   const [form, setForm] = useState({
@@ -35,7 +36,7 @@ export function Contact() {
       </h1>
 
       <div className="mt-10 rounded-2xl border border-ink-200 bg-ink-50/50 p-6">
-        <h2 className="font-sans font-semibold text-ink-900">Aminomarket</h2>
+        <Logo variant="light" height="md" link={false} />
         <p className="mt-2 text-ink-600">11323 Arcade Dr. STE 105, Little Rock, AR 72212</p>
         <p className="mt-2">
           <a href="mailto:aminomarketshop@gmail.com" className="text-ink-900 underline underline-offset-2 hover:text-accent-dark">

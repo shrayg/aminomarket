@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { Logo } from './Logo'
 
 export function Footer() {
   return (
@@ -6,9 +7,7 @@ export function Footer() {
       <div className="mx-auto max-w-7xl px-4 py-16">
         <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-4">
           <div className="lg:col-span-1">
-            <h3 className="font-sans text-lg font-semibold text-ink-900">
-              Aminomarket
-            </h3>
+            <Logo variant="light" height="lg" />
             <p className="mt-4 text-sm leading-relaxed text-ink-600">
               A research-focused supplier of high-purity reference materials for
               laboratory and in-vitro use only. Transparent COAs, consistent

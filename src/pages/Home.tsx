@@ -46,7 +46,7 @@ export function Home() {
             <p className="mb-6 font-sans text-xs font-medium uppercase tracking-[0.25em] text-ink-400">
               99% PURITY GUARANTEED
             </p>
-            <h1 className="font-sans text-4xl font-extrabold leading-tight tracking-tight text-white md:text-5xl">
+            <h1 className="font-sans text-4xl font-extrabold leading-[1.2] tracking-tight text-white md:text-5xl">
               amino market
             </h1>
             <p className="mt-8 max-w-md font-sans text-lg leading-relaxed text-ink-300">

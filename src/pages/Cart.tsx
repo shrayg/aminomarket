@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { FlaskConical } from 'lucide-react'
 import { useCartStore } from '@/store/cart'
 
 export function Cart() {
@@ -7,7 +8,9 @@ export function Cart() {
   if (items.length === 0) {
     return (
       <div className="mx-auto max-w-xl px-4 py-24 text-center">
-        <div className="text-6xl text-ink-300">🛒</div>
+        <div className="flex justify-center text-ink-300">
+          <FlaskConical className="h-16 w-16" />
+        </div>
         <h1 className="mt-6 font-sans text-2xl font-bold text-ink-900">
           Your cart is empty
         </h1>
@@ -33,8 +36,16 @@ export function Cart() {
             key={item.id}
             className="flex flex-wrap items-center gap-6 rounded-2xl border border-ink-200 bg-white p-6"
           >
-            <div className="flex h-24 w-24 flex-shrink-0 items-center justify-center rounded-xl bg-ink-100 text-3xl">
-              🔬
+            <div className="flex h-24 w-24 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-ink-100">
+              {item.image ? (
+                <img
+                  src={item.image}
+                  alt={item.name}
+                  className="h-full w-full object-contain"
+                />
+              ) : (
+                <FlaskConical className="h-10 w-10 text-ink-300" />
+              )}
             </div>
             <div className="min-w-0 flex-1">
               <Link
@@ -43,7 +54,10 @@ export function Cart() {
               >
                 {item.name}
               </Link>
-              <p className="text-ink-600">${item.price.toFixed(2)}</p>
+              {item.variantLabel && (
+                <p className="text-sm text-ink-500">Dosage: {item.variantLabel}</p>
+              )}
+              <p className="mt-1 text-ink-600">${item.price.toFixed(2)}</p>
             </div>
             <div className="flex items-center gap-2">
               <button

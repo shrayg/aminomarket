@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { Logo } from '@/components/Logo'
 import { useCartStore } from '@/store/cart'
 
 export function Checkout() {
@@ -18,6 +19,7 @@ export function Checkout() {
   if (items.length === 0 && !loading) {
     return (
       <div className="mx-auto max-w-xl px-4 py-24 text-center">
+        <Logo variant="light" height="lg" className="mb-8 flex w-full justify-center" />
         <h1 className="text-2xl font-bold">Your cart is empty</h1>
         <Link to="/shop" className="mt-4 inline-block text-ink-900 underline underline-offset-2 hover:text-accent-dark">
           Return to shop
@@ -51,6 +53,7 @@ export function Checkout() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-16">
+      <Logo variant="light" height="md" className="mb-10 block w-fit" />
       <h1 className="font-sans text-3xl font-bold text-ink-900">
         Checkout
       </h1>

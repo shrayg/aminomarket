@@ -26,7 +26,17 @@ These appear in the Footer and Contact page.
 
 ---
 
-## 3. Hero Carousel (`src/data/heroCarousel.ts`)
+## 3. Logos
+
+Logos are in `public/logo/`:
+- `logo.png` — Light/white background (header, footer, light pages)
+- `logo-dark.png` — Dark/black background (announcement bar, hero)
+
+**To avoid blurry/pixelated logos:** Export at **2× display size** or higher. For example, if the logo displays at 80px tall, the source PNG should be at least **160px tall**. Use PNG (not JPEG) for crisp text and edges.
+
+---
+
+## 4. Hero Carousel (`src/data/heroCarousel.ts`)
 
 Images go in `public/hero/`. Update filenames and links to match.
 
@@ -38,7 +48,7 @@ Images go in `public/hero/`. Update filenames and links to match.
 
 ---
 
-## 4. Form Fields (for reference – users type these in)
+## 5. Form Fields (for reference – users type these in)
 
 Checkout: Email, Full Name, Address, City, State, ZIP  
 Contact: Name, Email, Phone, Subject, Order Number, Message  
@@ -51,7 +61,7 @@ Track order: Order number
 
 ---
 
-## 5. Page Content (currently PLACEHOLDER text)
+## 6. Page Content (currently PLACEHOLDER text)
 
 - [ ] **Privacy Policy** (`/privacy`) — Data collection, usage, storage, cookies, user rights
 - [ ] **Terms & Conditions** (`/terms`) — Research-use-only disclaimer, purchase agreement, liability
@@ -62,7 +72,7 @@ Track order: Order number
 
 ---
 
-## 6. Backend / Integrations
+## 7. Backend / Integrations
 
 - [ ] **Contact form** — Connect email service (Resend, SendGrid, etc.) in `server/routes/contact.js`
 - [ ] **Password reset** — Add reset flow in `ForgotPassword.tsx` and backend
@@ -71,7 +81,7 @@ Track order: Order number
 
 ---
 
-## 7. Test / Seed Data
+## 8. Test / Seed Data
 
 - [ ] **Test user** — Seed creates `test@example.com` / `password123`; remove or change for production
 

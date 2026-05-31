@@ -3,10 +3,13 @@ import { persist } from 'zustand/middleware'
 
 export type CartItem = {
   id: string
+  productId: string
   name: string
   slug: string
   price: number
   quantity: number
+  image?: string
+  variantLabel?: string
 }
 
 type CartStore = {
@@ -47,6 +50,6 @@ export const useCartStore = create<CartStore>()(
       getTotal: () => get().items.reduce((sum, i) => sum + i.price * i.quantity, 0),
       getCount: () => get().items.reduce((sum, i) => sum + i.quantity, 0),
     }),
-    { name: 'amp-cart' }
+    { name: 'amp-cart-v2' }
   )
 )

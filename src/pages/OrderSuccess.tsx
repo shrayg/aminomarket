@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom'
+import { Logo } from '@/components/Logo'
 
 export function OrderSuccess() {
   return (
     <div className="mx-auto max-w-xl px-4 py-24 text-center">
+      <Logo variant="light" height="lg" className="mb-8 flex w-full justify-center" />
       <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border-2 border-accent bg-accent-light text-2xl text-accent-dark">
         ✓
       </div>

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { Logo } from '@/components/Logo'
 import { api } from '@/lib/api'
 
 export function Login() {
@@ -27,6 +28,7 @@ export function Login() {
 
   return (
     <div className="mx-auto max-w-md px-4 py-20">
+      <Logo variant="light" height="lg" className="mb-8 flex w-full justify-center" />
       <h1 className="font-sans text-2xl font-bold text-ink-900">
         Welcome Back
       </h1>

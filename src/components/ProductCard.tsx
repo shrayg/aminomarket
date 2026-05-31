@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { FlaskConical } from 'lucide-react'
-import { type Product } from '@/data/products'
+import { getStartingPrice, type Product } from '@/data/products'
 import { AddToCartButton } from './AddToCartButton'
 
 export function ProductCard({
@@ -12,13 +12,25 @@ export function ProductCard({
   showCategory?: boolean
   badge?: string
 }) {
+  const startingPrice = getStartingPrice(product)
+  const hasMultipleVariants = (product.variants?.length ?? 0) > 1
+
   return (
     <article className="group flex flex-col border border-ink-200 bg-white transition hover:border-ink-300">
       <Link to={`/product/${product.slug}`} className="flex flex-1 flex-col">
-        <div className="relative aspect-square bg-ink-100">
-          <div className="absolute inset-0 flex items-center justify-center">
-            <FlaskConical className="h-16 w-16 text-ink-300 transition group-hover:text-ink-400" />
-          </div>
+        <div className="relative aspect-square overflow-hidden bg-ink-100">
+          {product.image ? (
+            <img
+              src={product.image}
+              alt={product.name}
+              loading="lazy"
+              className="h-full w-full object-contain transition duration-300 group-hover:scale-105"
+            />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <FlaskConical className="h-16 w-16 text-ink-300 transition group-hover:text-ink-400" />
+            </div>
+          )}
           {badge && (
             <span className="absolute left-0 top-0 bg-ink-900 px-3 py-1.5 font-sans text-[11px] font-semibold uppercase tracking-wider text-white">
               {badge}
@@ -36,17 +48,34 @@ export function ProductCard({
               {typeof product.category === 'string' ? product.category : product.category.name}
             </p>
           )}
-          <h3 className="mt-2 font-sans font-semibold text-ink-900 line-clamp-2 transition group-hover:text-accent-dark">
+          <h3 className="mt-2 font-sans font-semibold text-ink-900 transition group-hover:text-accent-dark">
             {product.name}
           </h3>
+          {hasMultipleVariants && (
+            <p className="mt-1 font-sans text-xs text-ink-500">
+              {product.variants!.length} dosage options
+            </p>
+          )}
           <p className="mt-auto pt-4 font-sans text-xl font-bold text-ink-900">
-            ${product.price.toFixed(2)}
+            {hasMultipleVariants && (
+              <span className="mr-1 text-sm font-medium text-ink-500">from</span>
+            )}
+            ${startingPrice.toFixed(2)}
           </p>
         </div>
       </Link>
       <div className="border-t border-ink-100 p-5">
         {product.inStock ? (
-          <AddToCartButton product={product} className="w-full" />
+          hasMultipleVariants ? (
+            <Link
+              to={`/product/${product.slug}`}
+              className="flex w-full items-center justify-center gap-2 border-2 border-ink-900 bg-ink-900 px-4 py-3 font-sans text-sm font-semibold text-white transition hover:bg-ink-800"
+            >
+              Select dosage
+            </Link>
+          ) : (
+            <AddToCartButton product={product} className="w-full" />
+          )
         ) : (
           <p className="text-center font-sans text-sm text-ink-500">
             Join the waitlist for updates.

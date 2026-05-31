@@ -1,6 +1,9 @@
+import { Logo } from '@/components/Logo'
+
 export function About() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-16">
+      <Logo variant="light" height="lg" link={false} className="mb-10" />
       <h1 className="font-sans text-3xl font-bold text-ink-900">
         About Us
       </h1>
