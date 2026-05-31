@@ -1,7 +1,15 @@
+import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Logo } from '@/components/Logo'
+import { useCartStore } from '@/store/cart'
 
 export function OrderSuccess() {
+  const clearCart = useCartStore((s) => s.clearCart)
+
+  useEffect(() => {
+    clearCart()
+  }, [clearCart])
+
   return (
     <div className="mx-auto max-w-xl px-4 py-24 text-center">
       <Logo variant="light" height="lg" className="mb-8 flex w-full justify-center" />

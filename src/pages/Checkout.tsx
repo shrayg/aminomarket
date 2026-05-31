@@ -4,7 +4,7 @@ import { Logo } from '@/components/Logo'
 import { useCartStore } from '@/store/cart'
 
 export function Checkout() {
-  const { items, getTotal, clearCart } = useCartStore()
+  const { items, getTotal } = useCartStore()
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [form, setForm] = useState({
@@ -38,7 +38,6 @@ export function Checkout() {
         email: form.email,
         shipping: form,
       })
-      clearCart()
       if (res.url && res.url.startsWith('http')) {
         window.location.href = res.url
       } else {
@@ -147,7 +146,7 @@ export function Checkout() {
               {loading ? 'Processing...' : 'Complete Order'}
             </button>
             <p className="mt-4 text-center text-xs text-ink-500">
-              PLACEHOLDER: Add Stripe or payment provider
+              You can confirm vial quantities again on the secure payment page.
             </p>
           </div>
         </div>

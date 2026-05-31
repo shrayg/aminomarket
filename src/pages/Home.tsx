@@ -39,37 +39,37 @@ export function Home() {
   return (
     <div>
       {/* Hero - amino market + carousel */}
-      <section className="relative min-h-[85vh] bg-[#1A1B1F] text-white">
+      <section className="relative bg-[#1A1B1F] text-white">
         <div className="noise absolute inset-0 pointer-events-none" />
-        <div className="relative mx-auto grid min-h-[85vh] max-w-7xl grid-cols-1 lg:grid-cols-2">
-          <div className="flex flex-col justify-center px-6 py-16 text-left md:px-12">
-            <p className="mb-6 font-sans text-xs font-medium uppercase tracking-[0.25em] text-ink-400">
+        <div className="relative mx-auto grid max-w-7xl grid-cols-1 lg:grid-cols-2">
+          <div className="flex flex-col justify-center px-6 py-12 text-left md:px-12 lg:py-16">
+            <p className="mb-5 font-sans text-xs font-medium uppercase tracking-[0.25em] text-ink-400">
               99% PURITY GUARANTEED
             </p>
             <h1 className="font-sans text-4xl font-extrabold leading-[1.2] tracking-tight text-white md:text-5xl">
               amino market
             </h1>
-            <p className="mt-8 max-w-md font-sans text-lg leading-relaxed text-ink-300">
+            <p className="mt-6 max-w-md font-sans text-base leading-relaxed text-ink-300">
               Premium-grade research peptides backed by science. Trusted by
               scientists and institutions advancing biochemistry, longevity, and
               cellular discovery.
             </p>
-            <div className="mt-10 flex flex-wrap gap-4">
+            <div className="mt-8 flex flex-wrap gap-4">
               <Link
                 to="/shop"
-                className="inline-flex items-center border-2 border-[#c9a227] bg-[#c9a227] px-8 py-4 font-semibold text-ink-950 transition hover:bg-[#d4af37]"
+                className="inline-flex items-center border-2 border-[#c9a227] bg-[#c9a227] px-8 py-3.5 font-semibold text-ink-950 transition hover:bg-[#d4af37]"
               >
                 Shop Peptides
               </Link>
               <Link
                 to="/pre-sale"
-                className="inline-flex items-center border-2 border-white/30 px-8 py-4 font-semibold transition hover:border-white/60"
+                className="inline-flex items-center border-2 border-white/30 px-8 py-3.5 font-semibold transition hover:border-white/60"
               >
                 Pre-Sale
               </Link>
             </div>
           </div>
-          <div className="relative min-h-[400px] lg:min-h-[85vh]">
+          <div className="relative min-h-[420px]">
             <HeroCarousel slides={heroSlides} />
           </div>
         </div>
