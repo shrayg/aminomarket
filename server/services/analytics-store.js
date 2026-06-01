@@ -123,6 +123,29 @@ function mapFulfillment(row) {
   }
 }
 
+// Batch metadata is encoded into the note column so the storefront keeps working
+// against the existing fulfillment_records schema without a Supabase migration.
+// Format: `__batch__:<batchId>:<isoTimestamp>__\n<optional user note>`
+const BATCH_NOTE_RE = /^__batch__:([^:]+):([^_]+)__(?:\n([\s\S]*))?$/
+
+export function parseBatchFromNote(note) {
+  if (!note) return { batchId: null, batchedAt: null, userNote: '' }
+  const match = BATCH_NOTE_RE.exec(note)
+  if (!match) return { batchId: null, batchedAt: null, userNote: note }
+  return { batchId: match[1], batchedAt: match[2], userNote: match[3] || '' }
+}
+
+export function encodeBatchNote(batchId, batchedAt, userNote = '') {
+  if (!batchId || !batchedAt) return userNote || null
+  const prefix = `__batch__:${batchId}:${batchedAt}__`
+  return userNote ? `${prefix}\n${userNote}` : prefix
+}
+
+export async function getFulfillment(stripeSessionId) {
+  const records = await listFulfillments()
+  return records.find((record) => record.stripeSessionId === String(stripeSessionId)) || null
+}
+
 export async function recordAnalyticsEvent(input) {
   const event = {
     sessionId: String(input.sessionId),

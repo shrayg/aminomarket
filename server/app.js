@@ -30,7 +30,9 @@ app.use(cors({
   }
 }))
 app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), stripeWebhook)
-app.use(express.json())
+// 12mb limit accommodates base64-encoded manufacture-confirmation screenshots
+// (raw image cap is ~9mb after base64 inflation, comfortably under Discord's 25mb).
+app.use(express.json({ limit: '12mb' }))
 
 app.use('/api/products', productsRouter)
 app.use('/api/auth', authRouter)

@@ -11,5 +11,8 @@
       "memory": 1024,
       "maxDuration": 10
     }
-  }
+  },
+  "crons": [
+    { "path": "/api/admin/code/notify", "schedule": "0 * * * *" }
+  ]
 }

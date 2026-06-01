@@ -1,9 +1,7 @@
 import crypto from 'node:crypto'
 import jwt from 'jsonwebtoken'
+import { getCurrentHourCode } from '../services/admin-code.js'
 
-const ADMIN_PASSWORD =
-  process.env.ADMIN_PASSWORD ||
-  (process.env.NODE_ENV === 'production' ? '' : 'kaimatsu')
 const ADMIN_JWT_SECRET =
   process.env.ADMIN_JWT_SECRET ||
   process.env.JWT_SECRET ||
@@ -24,32 +22,49 @@ function getAttemptRecord(ip) {
 }
 
 function safeEqual(value, expected) {
-  const left = Buffer.from(String(value))
-  const right = Buffer.from(String(expected))
-  return left.length === right.length && crypto.timingSafeEqual(left, right)
+  const left = Buffer.from(String(value || ''))
+  const right = Buffer.from(String(expected || ''))
+  if (left.length !== right.length) return false
+  return crypto.timingSafeEqual(left, right)
 }
 
-export function createAdminToken(password, ip = 'unknown') {
+// The admin "password" is the current hourly rotating access code (broadcast to
+// Discord via /api/admin/code/notify). The issued JWT expires exactly when the
+// code rotates so a session can never outlive the code that opened it.
+export function createAdminToken(submittedCode, ip = 'unknown') {
   const record = getAttemptRecord(ip)
   if (record.count >= MAX_ATTEMPTS) {
     const error = new Error('Too many login attempts. Try again later.')
     error.statusCode = 429
     throw error
   }
-  if (!ADMIN_PASSWORD) {
-    const error = new Error('Admin access is not configured.')
-    error.statusCode = 503
-    throw error
-  }
-  if (!safeEqual(password, ADMIN_PASSWORD)) {
+
+  const codeInfo = getCurrentHourCode()
+  const submitted = String(submittedCode || '').trim()
+  if (!submitted || !safeEqual(submitted, codeInfo.code)) {
     record.count += 1
-    const error = new Error('Invalid admin password.')
+    const error = new Error('Invalid access code. Check the latest hourly code in Discord.')
     error.statusCode = 401
     throw error
   }
 
   attempts.delete(ip)
-  return jwt.sign({ role: 'admin' }, ADMIN_JWT_SECRET, { expiresIn: '8h' })
+
+  const expSeconds = Math.floor(new Date(codeInfo.validTo).getTime() / 1000)
+  const nowSeconds = Math.floor(Date.now() / 1000)
+  // Refuse to issue a token with <2s of life (would log the operator out before
+  // the dashboard finished loading); they should wait for the next rotation.
+  if (expSeconds - nowSeconds < 2) {
+    const error = new Error('Access code is about to rotate. Wait for the next code in Discord.')
+    error.statusCode = 401
+    throw error
+  }
+
+  const token = jwt.sign(
+    { role: 'admin', exp: expSeconds, iat: nowSeconds },
+    ADMIN_JWT_SECRET
+  )
+  return { token, expiresAt: codeInfo.validTo }
 }
 
 export function requireAdmin(req, res, next) {

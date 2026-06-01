@@ -1,12 +1,18 @@
 import { Router } from 'express'
+import { randomUUID } from 'node:crypto'
 import Stripe from 'stripe'
 import { createAdminToken, requireAdmin } from '../middleware/admin-auth.js'
 import {
+  encodeBatchNote,
+  getFulfillment,
   listAnalytics,
   listFulfillments,
   listRegisteredUsers,
+  parseBatchFromNote,
   saveFulfillment,
 } from '../services/analytics-store.js'
+import { getCurrentHourCode, postCodeToDiscord } from '../services/admin-code.js'
+import { postManufactureBatch } from '../services/manufacture-discord.js'
 
 const router = Router()
 const stripe = process.env.STRIPE_SECRET_KEY
@@ -56,6 +62,7 @@ function normalizeOrder(session, fulfillmentById) {
   const customerDetails = session.customer_details || {}
   const fulfillment = fulfillmentById.get(session.id)
   const lineItems = session.line_items?.data || []
+  const batch = parseBatchFromNote(fulfillment?.note || '')
 
   return {
     id: session.id,
@@ -70,7 +77,9 @@ function normalizeOrder(session, fulfillmentById) {
     paymentStatus: session.payment_status || 'unknown',
     fulfillmentStatus: fulfillment?.status || 'unfulfilled',
     trackingNumber: fulfillment?.trackingNumber || '',
-    note: fulfillment?.note || '',
+    note: batch.userNote,
+    batchId: batch.batchId,
+    batchedAt: batch.batchedAt,
     shipping: shipping
       ? { name: shipping.name || '', address: addressForDashboard(shipping.address) }
       : null,
@@ -270,9 +279,31 @@ async function stripeSummary(days, fulfillmentById) {
   }
 }
 
+function cronOrAdmin(req, res, next) {
+  const token = req.headers.authorization?.replace(/^Bearer\s+/i, '')
+  const cronSecret = process.env.CRON_SECRET
+  if (token && cronSecret && token === cronSecret) return next()
+  return requireAdmin(req, res, next)
+}
+
+router.get('/code', requireAdmin, (_req, res) => {
+  res.json(getCurrentHourCode())
+})
+
+// Vercel Cron hits this hourly via GET; admin UI can also trigger via POST
+async function notifyHandler(_req, res) {
+  const codeInfo = getCurrentHourCode()
+  const delivery = await postCodeToDiscord(codeInfo)
+  res.json({ ...codeInfo, delivery })
+}
+
+router.get('/code/notify', cronOrAdmin, notifyHandler)
+router.post('/code/notify', cronOrAdmin, notifyHandler)
+
 router.post('/login', (req, res) => {
   try {
-    res.json({ token: createAdminToken(req.body?.password, req.ip) })
+    const { token, expiresAt } = createAdminToken(req.body?.password, req.ip)
+    res.json({ token, expiresAt })
   } catch (error) {
     res.status(error.statusCode || 500).json({ error: error.message })
   }
@@ -304,12 +335,166 @@ router.patch('/orders/:stripeSessionId', requireAdmin, async (req, res) => {
   if (!FULFILLMENT_STATUSES.has(status)) {
     return res.status(400).json({ error: 'Invalid fulfillment status.' })
   }
+
+  // Preserve any existing batch prefix so historical "which batch did this
+  // ship in" info isn't lost when an operator edits the note.
+  const existing = await getFulfillment(req.params.stripeSessionId)
+  const existingBatch = parseBatchFromNote(existing?.note || '')
+  const incomingUserNote = req.body?.note != null ? String(req.body.note) : existingBatch.userNote
+  const note = encodeBatchNote(existingBatch.batchId, existingBatch.batchedAt, incomingUserNote)
+
   const record = await saveFulfillment(req.params.stripeSessionId, {
     status,
     trackingNumber: req.body?.trackingNumber,
-    note: req.body?.note,
+    note,
   })
   res.json(record)
+})
+
+// ---------------------------------------------------------------------------
+// Manufacture batches: aggregate paid+unfulfilled orders, ship them off to the
+// production team, and group the resulting "processing" orders by batch.
+// ---------------------------------------------------------------------------
+
+async function loadOrdersWithFulfillment(days = 60) {
+  if (!stripe) return []
+  const since = Math.floor((Date.now() - days * 24 * 60 * 60 * 1000) / 1000)
+  const response = await stripe.checkout.sessions.list({
+    limit: 100,
+    created: { gte: since },
+    expand: ['data.line_items'],
+  })
+  const fulfillments = await listFulfillments()
+  const fulfillmentById = new Map(fulfillments.map((record) => [record.stripeSessionId, record]))
+  return response.data.map((session) => normalizeOrder(session, fulfillmentById))
+}
+
+function aggregateLineItems(orders) {
+  const map = new Map()
+  let totalUnits = 0
+  for (const order of orders) {
+    for (const item of order.items) {
+      const key = item.name
+      const current = map.get(key) || { name: key, quantity: 0 }
+      current.quantity += item.quantity || 0
+      totalUnits += item.quantity || 0
+      map.set(key, current)
+    }
+  }
+  return {
+    lines: [...map.values()].sort((a, b) => b.quantity - a.quantity),
+    totalUnits,
+  }
+}
+
+router.get('/manufacture/queue', requireAdmin, async (_req, res) => {
+  if (!stripe) {
+    return res.json({
+      configured: false,
+      orders: [],
+      aggregate: { lines: [], totalUnits: 0 },
+    })
+  }
+  const orders = await loadOrdersWithFulfillment(60)
+  const queue = orders.filter(
+    (order) => order.paymentStatus === 'paid' && order.fulfillmentStatus === 'unfulfilled'
+  )
+  const aggregate = aggregateLineItems(queue)
+  res.json({
+    configured: true,
+    generatedAt: new Date().toISOString(),
+    orders: queue,
+    aggregate,
+  })
+})
+
+router.post('/manufacture/batches', requireAdmin, async (req, res) => {
+  if (!stripe) {
+    return res.status(503).json({ error: 'Stripe is not configured.' })
+  }
+  const sessionIds = Array.isArray(req.body?.sessionIds)
+    ? req.body.sessionIds.map((id) => String(id)).filter(Boolean)
+    : []
+  if (sessionIds.length === 0) {
+    return res.status(400).json({ error: 'sessionIds is required and must be a non-empty array.' })
+  }
+  if (!req.body?.screenshot) {
+    return res.status(400).json({ error: 'screenshot (base64 data URL) is required.' })
+  }
+
+  // Re-validate every session is actually paid + unfulfilled before
+  // transitioning, so a stale UI can't push the wrong rows into processing.
+  const orders = await loadOrdersWithFulfillment(60)
+  const orderById = new Map(orders.map((order) => [order.id, order]))
+  const eligible = []
+  const skipped = []
+  for (const id of sessionIds) {
+    const order = orderById.get(id)
+    if (!order) {
+      skipped.push({ id, reason: 'not-found' })
+    } else if (order.paymentStatus !== 'paid') {
+      skipped.push({ id, reason: 'not-paid' })
+    } else if (order.fulfillmentStatus !== 'unfulfilled') {
+      skipped.push({ id, reason: `already-${order.fulfillmentStatus}` })
+    } else {
+      eligible.push(order)
+    }
+  }
+  if (eligible.length === 0) {
+    return res.status(409).json({
+      error: 'No eligible orders in the submitted list (already moved or unpaid).',
+      skipped,
+    })
+  }
+
+  const batchId = randomUUID()
+  const batchedAt = new Date().toISOString()
+  const aggregate = aggregateLineItems(eligible)
+
+  const delivery = await postManufactureBatch({
+    batchId,
+    batchedAt,
+    orderCount: eligible.length,
+    totalUnits: aggregate.totalUnits,
+    productLines: aggregate.lines,
+    screenshot: req.body.screenshot,
+    filename: req.body.filename,
+    note: req.body.note,
+  })
+
+  if (!delivery.sent) {
+    return res.status(502).json({
+      error: 'Discord upload failed; no orders were transitioned.',
+      delivery,
+    })
+  }
+
+  // Discord post succeeded; flip every eligible order to processing.
+  const updated = []
+  for (const order of eligible) {
+    try {
+      const note = encodeBatchNote(batchId, batchedAt, order.note || '')
+      await saveFulfillment(order.id, {
+        status: 'processing',
+        trackingNumber: order.trackingNumber,
+        note,
+      })
+      updated.push(order.id)
+    } catch (err) {
+      console.error('Failed to mark order processing', order.id, err)
+    }
+  }
+
+  res.json({
+    batchId,
+    batchedAt,
+    orderCount: updated.length,
+    totalUnits: aggregate.totalUnits,
+    orders: updated,
+    skipped,
+    aggregate,
+    delivery,
+  })
 })
 
 export default router

@@ -4,16 +4,26 @@ import {
   AlertTriangle,
   BarChart3,
   Boxes,
+  ChevronDown,
+  Check,
   Clock3,
+  Copy,
   CreditCard,
   Eye,
+  Factory,
+  FileUp,
+  KeyRound,
   LogOut,
   MousePointerClick,
   PackageCheck,
+  Pause,
   RefreshCw,
   Search,
+  Send,
   ShoppingCart,
+  Upload,
   Users,
+  X,
 } from 'lucide-react'
 import { Logo } from '@/components/Logo'
 
@@ -40,9 +50,21 @@ type Order = {
   fulfillmentStatus: string
   trackingNumber: string
   note: string
+  batchId: string | null
+  batchedAt: string | null
   shipping: { name: string; address: Address | null } | null
   billing: { name: string; address: Address | null } | null
   items: { name: string; quantity: number; total: number }[]
+}
+type ManufactureAggregate = {
+  lines: { name: string; quantity: number }[]
+  totalUnits: number
+}
+type ManufactureQueue = {
+  configured: boolean
+  generatedAt?: string
+  orders: Order[]
+  aggregate: ManufactureAggregate
 }
 type Customer = {
   id: string
@@ -56,6 +78,14 @@ type Customer = {
   shipping: { name: string; address: Address | null } | null
   billing: { name: string; address: Address | null } | null
 }
+type RotatingCode = {
+  code: string
+  hourBucket: number
+  validFrom: string
+  validTo: string
+  expiresInSeconds: number
+}
+
 type Dashboard = {
   generatedAt: string
   days: number
@@ -101,12 +131,22 @@ type Dashboard = {
   registeredUsers: { id: string; email: string; name: string | null; createdAt: string }[]
 }
 
-type Tab = 'overview' | 'behavior' | 'searches' | 'orders' | 'customers' | 'payments'
+type Tab =
+  | 'overview'
+  | 'behavior'
+  | 'searches'
+  | 'manufacture'
+  | 'processing'
+  | 'orders'
+  | 'customers'
+  | 'payments'
 
 const tabs: { id: Tab; label: string; icon: typeof Activity }[] = [
   { id: 'overview', label: 'Overview', icon: BarChart3 },
   { id: 'behavior', label: 'Behavior', icon: MousePointerClick },
   { id: 'searches', label: 'Searches', icon: Search },
+  { id: 'manufacture', label: 'Manufacture', icon: Factory },
+  { id: 'processing', label: 'Processing', icon: Pause },
   { id: 'orders', label: 'Orders', icon: Boxes },
   { id: 'customers', label: 'Customers', icon: Users },
   { id: 'payments', label: 'Payments', icon: CreditCard },
@@ -284,6 +324,793 @@ function StatusBadge({ value }: { value: string }) {
   )
 }
 
+function formatCountdown(seconds: number) {
+  if (seconds <= 0) return '00:00'
+  const m = Math.floor(seconds / 60)
+  const s = seconds % 60
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+}
+
+// Decode the `exp` claim out of an admin JWT without verifying the signature
+// (that's the server's job). Used to schedule the client-side auto-logout that
+// fires the moment the hourly code rotates.
+function decodeJwtExpMs(token: string): number {
+  if (!token) return 0
+  try {
+    const payload = token.split('.')[1]
+    if (!payload) return 0
+    const padded = payload.replace(/-/g, '+').replace(/_/g, '/')
+    const json = JSON.parse(atob(padded))
+    return Number(json?.exp || 0) * 1000
+  } catch {
+    return 0
+  }
+}
+
+const ADMIN_LOGOUT_EVENT = 'amp-admin-force-logout'
+
+// Centralized authenticated fetch. Attaches the bearer token, normalizes JSON
+// content-type, and raises a global force-logout event on 401 so every caller
+// reacts identically when the hourly code expires mid-session.
+async function adminFetch(
+  token: string,
+  input: RequestInfo,
+  init: RequestInit = {}
+): Promise<Response> {
+  const headers = new Headers(init.headers || {})
+  if (token) headers.set('Authorization', `Bearer ${token}`)
+  if (
+    init.body &&
+    !headers.has('Content-Type') &&
+    !(init.body instanceof FormData) &&
+    typeof init.body === 'string'
+  ) {
+    headers.set('Content-Type', 'application/json')
+  }
+  const res = await fetch(input, { ...init, headers })
+  if (res.status === 401) {
+    sessionStorage.removeItem('amp-admin-token')
+    window.dispatchEvent(new CustomEvent(ADMIN_LOGOUT_EVENT))
+  }
+  return res
+}
+
+function RotatingCodeCard({ token }: { token: string }) {
+  const [data, setData] = useState<RotatingCode | null>(null)
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [sending, setSending] = useState(false)
+  const [sendResult, setSendResult] = useState<string>('')
+  const [copied, setCopied] = useState(false)
+  const [now, setNow] = useState(Date.now())
+
+  const load = useCallback(async () => {
+    if (!token) return
+    setLoading(true)
+    setError('')
+    try {
+      const res = await adminFetch(token, '/api/admin/code')
+      const body = await res.json()
+      if (!res.ok) throw new Error(body.error || 'Could not load access code.')
+      setData(body)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not load access code.')
+    } finally {
+      setLoading(false)
+    }
+  }, [token])
+
+  useEffect(() => {
+    void load()
+  }, [load])
+
+  // Tick every second for countdown; auto-reload when the hour rolls over.
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(interval)
+  }, [])
+
+  useEffect(() => {
+    if (!data) return
+    const expiresAt = new Date(data.validTo).getTime()
+    if (now >= expiresAt) void load()
+  }, [now, data, load])
+
+  const expiresAt = data ? new Date(data.validTo).getTime() : 0
+  const remaining = data ? Math.max(0, Math.round((expiresAt - now) / 1000)) : 0
+
+  async function copyCode() {
+    if (!data) return
+    try {
+      await navigator.clipboard.writeText(data.code)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    } catch {
+      // ignore
+    }
+  }
+
+  async function sendToDiscord() {
+    setSending(true)
+    setSendResult('')
+    try {
+      const res = await adminFetch(token, '/api/admin/code/notify', { method: 'POST' })
+      const body = await res.json()
+      if (!res.ok) throw new Error(body.error || 'Discord delivery failed.')
+      setSendResult(
+        body.delivery?.sent
+          ? 'Sent to Discord.'
+          : `Not sent: ${body.delivery?.reason || 'unknown reason'}`
+      )
+    } catch (err) {
+      setSendResult(err instanceof Error ? err.message : 'Discord delivery failed.')
+    } finally {
+      setSending(false)
+      setTimeout(() => setSendResult(''), 6000)
+    }
+  }
+
+  return (
+    <section className="border border-ink-900 bg-ink-950 p-5 text-white shadow-xl">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center border border-white/15 bg-white/5">
+            <KeyRound className="h-5 w-5 text-accent-light" />
+          </div>
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-accent-light">Hourly access code</p>
+            <h2 className="mt-1 text-base font-bold">Rotates every hour, broadcast to Discord</h2>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => void load()}
+            disabled={loading}
+            className="flex items-center gap-2 border border-white/20 bg-white/5 px-3 py-2 text-xs font-bold uppercase tracking-wider text-white/80 transition hover:border-white/40 hover:text-white disabled:opacity-50"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+          <button
+            type="button"
+            onClick={() => void sendToDiscord()}
+            disabled={sending || !data}
+            className="flex items-center gap-2 border border-accent-light bg-accent-light px-3 py-2 text-xs font-bold uppercase tracking-wider text-ink-950 transition hover:opacity-90 disabled:opacity-50"
+          >
+            <Send className={`h-3.5 w-3.5 ${sending ? 'animate-pulse' : ''}`} />
+            {sending ? 'Sending...' : 'Send to Discord'}
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-5 grid gap-4 lg:grid-cols-[1fr,auto] lg:items-center">
+        <button
+          type="button"
+          onClick={() => void copyCode()}
+          disabled={!data}
+          title="Click to copy"
+          className="group flex w-full items-center justify-between gap-3 border border-white/15 bg-black/40 px-5 py-5 text-left transition hover:border-accent-light disabled:opacity-50"
+        >
+          <span className="font-mono text-3xl font-bold tracking-[0.35em] text-white sm:text-4xl">
+            {data ? data.code : '------------'}
+          </span>
+          <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-white/60 group-hover:text-accent-light">
+            {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+            {copied ? 'Copied' : 'Copy'}
+          </span>
+        </button>
+        <div className="grid gap-1 text-right">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/50">Rotates in</p>
+          <p className="font-mono text-2xl font-bold text-white">{formatCountdown(remaining)}</p>
+          {data && (
+            <p className="text-[10px] text-white/40">
+              Next reset {new Date(data.validTo).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {error && <p className="mt-3 text-xs text-rose-300">{error}</p>}
+      {sendResult && <p className="mt-3 text-xs text-white/70">{sendResult}</p>}
+    </section>
+  )
+}
+
+function ManufactureTab({
+  token,
+  onBatchSent,
+}: {
+  token: string
+  onBatchSent: () => void
+}) {
+  const [queue, setQueue] = useState<ManufactureQueue | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [screenshot, setScreenshot] = useState<{ dataUrl: string; filename: string; previewUrl: string } | null>(null)
+  const [note, setNote] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const [success, setSuccess] = useState('')
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    setError('')
+    try {
+      const res = await adminFetch(token, '/api/admin/manufacture/queue')
+      const body = await res.json()
+      if (!res.ok) throw new Error(body.error || 'Could not load manufacture queue.')
+      setQueue(body)
+      setSelectedIds(new Set((body.orders || []).map((o: Order) => o.id)))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not load manufacture queue.')
+    } finally {
+      setLoading(false)
+    }
+  }, [token])
+
+  useEffect(() => {
+    void load()
+  }, [load])
+
+  function toggleOne(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  function toggleAll() {
+    if (!queue) return
+    setSelectedIds((prev) => {
+      if (prev.size === queue.orders.length) return new Set()
+      return new Set(queue.orders.map((o) => o.id))
+    })
+  }
+
+  const selectedOrders = useMemo(
+    () => (queue ? queue.orders.filter((o) => selectedIds.has(o.id)) : []),
+    [queue, selectedIds]
+  )
+
+  const selectedAggregate = useMemo(() => {
+    const map = new Map<string, number>()
+    let total = 0
+    for (const order of selectedOrders) {
+      for (const item of order.items) {
+        const q = item.quantity || 0
+        map.set(item.name, (map.get(item.name) || 0) + q)
+        total += q
+      }
+    }
+    return {
+      lines: [...map.entries()]
+        .map(([name, quantity]) => ({ name, quantity }))
+        .sort((a, b) => b.quantity - a.quantity),
+      totalUnits: total,
+    }
+  }, [selectedOrders])
+
+  async function copyManufactureList() {
+    if (selectedAggregate.lines.length === 0) return
+    const header = `Manufacture batch \u2014 ${selectedOrders.length} orders / ${selectedAggregate.totalUnits} units`
+    const aggregate = selectedAggregate.lines.map((l) => `${l.quantity}x  ${l.name}`).join('\n')
+    const detail = selectedOrders
+      .map((o) => {
+        const items = o.items.map((i) => `  - ${i.quantity}x ${i.name}`).join('\n')
+        return `${o.id} \u2014 ${o.customerName || 'Guest'} (${o.email})\n${items}`
+      })
+      .join('\n\n')
+    const text = `${header}\n\nTotals:\n${aggregate}\n\nIndividual orders:\n${detail}\n`
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    } catch {
+      setError('Clipboard copy was blocked by the browser.')
+    }
+  }
+
+  function handleFile(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    if (!file) return
+    if (file.size > 9 * 1024 * 1024) {
+      setError('Screenshot must be under 9 MB. Please re-export at a lower size.')
+      return
+    }
+    if (!file.type.startsWith('image/')) {
+      setError('Only image files are accepted.')
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = () => {
+      const dataUrl = String(reader.result)
+      setScreenshot({ dataUrl, filename: file.name, previewUrl: dataUrl })
+      setError('')
+    }
+    reader.onerror = () => setError('Could not read the selected file.')
+    reader.readAsDataURL(file)
+  }
+
+  async function submitBatch() {
+    if (selectedIds.size === 0) {
+      setError('Select at least one order to send.')
+      return
+    }
+    if (!screenshot) {
+      setError('Attach a screenshot proving the orders were sent to the manufacturer.')
+      return
+    }
+    setSubmitting(true)
+    setError('')
+    setSuccess('')
+    try {
+      const res = await adminFetch(token, '/api/admin/manufacture/batches', {
+        method: 'POST',
+        body: JSON.stringify({
+          sessionIds: [...selectedIds],
+          screenshot: screenshot.dataUrl,
+          filename: screenshot.filename,
+          note,
+        }),
+      })
+      const body = await res.json()
+      if (!res.ok) {
+        const reason = body?.delivery?.reason ? ` (${body.delivery.reason})` : ''
+        throw new Error((body.error || 'Batch upload failed.') + reason)
+      }
+      setSuccess(
+        `Batch ${String(body.batchId).slice(0, 8)} sent \u2014 ${body.orderCount} orders moved to processing.`
+      )
+      setConfirmOpen(false)
+      setScreenshot(null)
+      setNote('')
+      await load()
+      onBatchSent()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Batch upload failed.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const orders = queue?.orders || []
+  const allSelected = orders.length > 0 && selectedIds.size === orders.length
+
+  return (
+    <div className="mt-6 space-y-6">
+      <header className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-bold text-ink-900">Manufacture queue</h2>
+          <p className="mt-1 text-sm text-ink-500">
+            Paid orders that have not yet been sent to the manufacturer. Pick which orders are in
+            this batch, copy the totals to send, then confirm with a screenshot of the hand-off.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => void load()}
+          disabled={loading}
+          className="flex items-center gap-2 border border-ink-200 bg-white px-3 py-2 text-sm font-semibold transition hover:border-ink-400 disabled:opacity-50"
+        >
+          <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+          Refresh
+        </button>
+      </header>
+
+      {error && (
+        <div className="flex items-start gap-3 border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" /> {error}
+        </div>
+      )}
+      {success && (
+        <div className="flex items-start gap-3 border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
+          <Check className="mt-0.5 h-4 w-4 shrink-0" /> {success}
+        </div>
+      )}
+
+      {orders.length === 0 ? (
+        <div className="border border-ink-200 bg-white p-10 text-center text-sm text-ink-500">
+          {loading ? 'Loading queue...' : 'No paid orders waiting on manufacture. \u2728'}
+        </div>
+      ) : (
+        <>
+          <div className="grid gap-4 lg:grid-cols-3">
+            <div className="border border-ink-200 bg-white p-5 lg:col-span-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-ink-400">
+                    Selected batch totals
+                  </p>
+                  <p className="mt-2 text-2xl font-bold text-ink-900">
+                    {selectedAggregate.totalUnits} units
+                  </p>
+                  <p className="text-xs text-ink-500">
+                    across {selectedOrders.length} order{selectedOrders.length === 1 ? '' : 's'}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void copyManufactureList()}
+                  disabled={selectedAggregate.lines.length === 0}
+                  className="flex items-center gap-2 border border-ink-900 bg-ink-900 px-3 py-2 text-xs font-bold uppercase tracking-wider text-white transition hover:bg-ink-800 disabled:opacity-40"
+                >
+                  {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                  {copied ? 'Copied' : 'Copy list'}
+                </button>
+              </div>
+              <div className="mt-4 max-h-72 overflow-y-auto border-t border-ink-100">
+                {selectedAggregate.lines.length === 0 ? (
+                  <p className="py-6 text-center text-xs text-ink-400">
+                    Select at least one order to see totals.
+                  </p>
+                ) : (
+                  <table className="w-full text-left text-sm">
+                    <thead className="sticky top-0 bg-white text-xs uppercase tracking-wider text-ink-400">
+                      <tr>
+                        <th className="py-3">Product</th>
+                        <th className="py-3 text-right">Qty</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedAggregate.lines.map((line) => (
+                        <tr key={line.name} className="border-t border-ink-100">
+                          <td className="py-2 pr-3">{line.name}</td>
+                          <td className="py-2 text-right font-semibold">{line.quantity}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
+            <div className="flex flex-col gap-3 border border-ink-900 bg-ink-900 p-5 text-white">
+              <p className="text-xs font-bold uppercase tracking-wider text-accent-light">
+                Send to manufacturer
+              </p>
+              <p className="text-sm leading-relaxed text-white/80">
+                When you have shared the copied list with your manufacturer, confirm here with a
+                screenshot of the chat. The screenshot is posted to the fulfillment Discord channel
+                and every selected order moves to <strong>Processing</strong>.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setConfirmOpen(true)
+                  setError('')
+                  setSuccess('')
+                }}
+                disabled={selectedIds.size === 0}
+                className="mt-auto flex items-center justify-center gap-2 border border-accent-light bg-accent-light px-4 py-3 text-sm font-bold uppercase tracking-wider text-ink-950 transition hover:opacity-90 disabled:opacity-50"
+              >
+                <FileUp className="h-4 w-4" />
+                Confirm sent ({selectedIds.size})
+              </button>
+            </div>
+          </div>
+
+          <section className="border border-ink-200 bg-white">
+            <div className="flex items-center justify-between border-b border-ink-200 px-4 py-3">
+              <label className="flex cursor-pointer items-center gap-2 text-xs font-bold uppercase tracking-wider text-ink-500">
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  onChange={toggleAll}
+                  className="h-4 w-4 border-ink-300"
+                />
+                Select all ({orders.length})
+              </label>
+              <p className="text-xs text-ink-500">
+                {selectedIds.size} of {orders.length} selected
+              </p>
+            </div>
+            <ul className="divide-y divide-ink-100">
+              {orders.map((order) => (
+                <li key={order.id} className="px-4 py-3">
+                  <label className="flex cursor-pointer items-start gap-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(order.id)}
+                      onChange={() => toggleOne(order.id)}
+                      className="mt-1 h-4 w-4 shrink-0 border-ink-300"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-baseline justify-between gap-3">
+                        <span className="font-medium text-ink-900">
+                          {order.customerName || 'Guest'}
+                        </span>
+                        <span className="font-mono text-[11px] text-ink-400">
+                          {order.id.slice(0, 18)}...
+                        </span>
+                      </div>
+                      <p className="text-xs text-ink-500">
+                        {order.email} &middot; {date(order.createdAt)} &middot; {money(order.total)}
+                      </p>
+                      <ul className="mt-1 text-xs text-ink-600">
+                        {order.items.map((item, idx) => (
+                          <li key={`${item.name}-${idx}`}>
+                            {item.quantity}x {item.name}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </label>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </>
+      )}
+
+      {confirmOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-ink-950/60 p-4"
+          onClick={() => !submitting && setConfirmOpen(false)}
+        >
+          <div
+            className="flex max-h-[90vh] w-full max-w-lg flex-col bg-white shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3 border-b border-ink-200 px-6 py-4">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider text-accent-dark">
+                  Confirm hand-off
+                </p>
+                <h3 className="mt-1 text-base font-bold text-ink-900">
+                  Send {selectedIds.size} order{selectedIds.size === 1 ? '' : 's'} to manufacturer
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => !submitting && setConfirmOpen(false)}
+                aria-label="Close"
+                className="flex h-8 w-8 shrink-0 items-center justify-center border border-ink-200 text-ink-600 transition hover:border-ink-400 hover:text-ink-900"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="flex-1 space-y-4 overflow-y-auto px-6 py-5">
+              <p className="text-sm leading-relaxed text-ink-600">
+                Attach a screenshot of the message where you shared the manufacture totals (Telegram,
+                email, etc.). It will be posted to the fulfillment Discord and the {selectedIds.size}{' '}
+                selected order{selectedIds.size === 1 ? '' : 's'} will transition to{' '}
+                <strong>processing</strong>.
+              </p>
+              <label className="block">
+                <span className="text-xs font-bold uppercase tracking-wider text-ink-500">
+                  Screenshot (PNG / JPG, &lt;9 MB)
+                </span>
+                <div className="mt-2 flex items-center gap-3">
+                  <label className="flex cursor-pointer items-center gap-2 border border-ink-300 bg-white px-3 py-2 text-sm font-medium text-ink-700 transition hover:border-ink-500">
+                    <Upload className="h-4 w-4" />
+                    {screenshot ? 'Replace file' : 'Choose file'}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFile}
+                      className="hidden"
+                    />
+                  </label>
+                  {screenshot && (
+                    <span className="truncate text-xs text-ink-500">{screenshot.filename}</span>
+                  )}
+                </div>
+              </label>
+              {screenshot && (
+                <img
+                  src={screenshot.previewUrl}
+                  alt="Manufacture hand-off preview"
+                  className="max-h-48 w-full border border-ink-200 object-contain"
+                />
+              )}
+              <label className="block">
+                <span className="text-xs font-bold uppercase tracking-wider text-ink-500">
+                  Operator note (optional)
+                </span>
+                <textarea
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  rows={3}
+                  placeholder="e.g. priority on cagrilintide; standard lead time confirmed"
+                  className="mt-2 w-full border border-ink-200 px-3 py-2 text-sm outline-none focus:border-ink-600"
+                />
+              </label>
+              {error && (
+                <p className="border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800">
+                  {error}
+                </p>
+              )}
+            </div>
+            <div className="flex items-center justify-end gap-2 border-t border-ink-200 px-6 py-4">
+              <button
+                type="button"
+                onClick={() => setConfirmOpen(false)}
+                disabled={submitting}
+                className="border border-ink-200 bg-white px-4 py-2 text-sm font-semibold text-ink-700 transition hover:border-ink-400 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => void submitBatch()}
+                disabled={submitting || !screenshot || selectedIds.size === 0}
+                className="flex items-center gap-2 bg-ink-900 px-4 py-2 text-sm font-bold text-white transition hover:bg-ink-800 disabled:opacity-50"
+              >
+                {submitting ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 animate-spin" /> Sending...
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4" /> Confirm &amp; transition
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function ProcessingTab({
+  orders,
+  onSelectOrder,
+}: {
+  orders: Order[]
+  onSelectOrder: (order: Order) => void
+}) {
+  const processing = useMemo(
+    () => orders.filter((order) => order.fulfillmentStatus === 'processing'),
+    [orders]
+  )
+
+  const groups = useMemo(() => {
+    const map = new Map<string, { batchId: string; batchedAt: string | null; orders: Order[] }>()
+    for (const order of processing) {
+      const key = order.batchId || 'ungrouped'
+      const existing = map.get(key)
+      if (existing) {
+        existing.orders.push(order)
+      } else {
+        map.set(key, {
+          batchId: order.batchId || 'ungrouped',
+          batchedAt: order.batchedAt,
+          orders: [order],
+        })
+      }
+    }
+    return [...map.values()].sort((a, b) => {
+      const ta = a.batchedAt ? Date.parse(a.batchedAt) : 0
+      const tb = b.batchedAt ? Date.parse(b.batchedAt) : 0
+      return tb - ta
+    })
+  }, [processing])
+
+  const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set())
+
+  useEffect(() => {
+    if (groups.length > 0) {
+      setOpenGroups((prev) => (prev.size === 0 ? new Set([groups[0].batchId]) : prev))
+    }
+  }, [groups])
+
+  function toggleGroup(batchId: string) {
+    setOpenGroups((prev) => {
+      const next = new Set(prev)
+      if (next.has(batchId)) next.delete(batchId)
+      else next.add(batchId)
+      return next
+    })
+  }
+
+  if (processing.length === 0) {
+    return (
+      <div className="mt-6 border border-ink-200 bg-white p-10 text-center text-sm text-ink-500">
+        Nothing is in processing right now.
+      </div>
+    )
+  }
+
+  return (
+    <div className="mt-6 space-y-4">
+      <header>
+        <h2 className="text-lg font-bold text-ink-900">Processing</h2>
+        <p className="mt-1 text-sm text-ink-500">
+          Orders that have been sent to the manufacturer, grouped by the batch they shipped in.
+          Click a group to expand the orders inside.
+        </p>
+      </header>
+      {groups.map((group) => {
+        const totalUnits = group.orders.reduce(
+          (sum, order) => sum + order.items.reduce((s, i) => s + (i.quantity || 0), 0),
+          0
+        )
+        const total = group.orders.reduce((sum, order) => sum + order.total, 0)
+        const open = openGroups.has(group.batchId)
+        const isBatched = group.batchId !== 'ungrouped'
+        return (
+          <section key={group.batchId} className="border border-ink-200 bg-white">
+            <button
+              type="button"
+              onClick={() => toggleGroup(group.batchId)}
+              className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition hover:bg-ink-50"
+            >
+              <div className="min-w-0">
+                <p className="text-xs font-bold uppercase tracking-wider text-accent-dark">
+                  {isBatched ? `Batch ${group.batchId.slice(0, 8)}` : 'Ungrouped processing orders'}
+                </p>
+                <p className="mt-1 text-sm font-semibold text-ink-900">
+                  {group.batchedAt
+                    ? new Date(group.batchedAt).toLocaleString([], {
+                        dateStyle: 'medium',
+                        timeStyle: 'short',
+                      })
+                    : 'No batch timestamp'}
+                </p>
+                <p className="mt-1 text-xs text-ink-500">
+                  {group.orders.length} order{group.orders.length === 1 ? '' : 's'} &middot;{' '}
+                  {totalUnits} units &middot; {money(total)}
+                </p>
+              </div>
+              <ChevronDown
+                className={`h-5 w-5 shrink-0 text-ink-500 transition-transform ${open ? 'rotate-180' : ''}`}
+              />
+            </button>
+            {open && (
+              <div className="overflow-x-auto border-t border-ink-200">
+                <table className="w-full min-w-[760px] text-left text-sm">
+                  <thead className="text-xs uppercase tracking-wider text-ink-400">
+                    <tr>
+                      <th className="px-5 pb-3 pt-3">Order</th>
+                      <th className="pb-3 pt-3">Customer</th>
+                      <th className="pb-3 pt-3">Placed</th>
+                      <th className="pb-3 pt-3">Total</th>
+                      <th className="pb-3 pt-3">Items</th>
+                      <th className="px-5 pb-3 pt-3"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {group.orders.map((order) => {
+                      const itemCount = order.items.reduce((s, i) => s + (i.quantity || 0), 0)
+                      return (
+                        <tr key={order.id} className="border-t border-ink-100">
+                          <td className="px-5 py-3 font-mono text-xs">{order.id.slice(0, 16)}...</td>
+                          <td className="py-3">
+                            <p className="font-medium">{order.customerName || 'Guest'}</p>
+                            <p className="text-xs text-ink-400">{order.email}</p>
+                          </td>
+                          <td className="py-3">{date(order.createdAt)}</td>
+                          <td className="py-3 font-semibold">{money(order.total)}</td>
+                          <td className="py-3">{itemCount}</td>
+                          <td className="px-5 py-3 text-right">
+                            <button
+                              type="button"
+                              onClick={() => onSelectOrder(order)}
+                              className="text-xs font-bold uppercase tracking-wider text-accent-dark hover:text-ink-900"
+                            >
+                              Details
+                            </button>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+        )
+      })}
+    </div>
+  )
+}
+
 function AdminLogin({ onLogin }: { onLogin: (password: string) => Promise<void> }) {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -294,7 +1121,7 @@ function AdminLogin({ onLogin }: { onLogin: (password: string) => Promise<void> 
     setLoading(true)
     setError('')
     try {
-      await onLogin(password)
+      await onLogin(password.trim())
     } catch (loginError) {
       setError(loginError instanceof Error ? loginError.message : 'Login failed.')
     } finally {
@@ -311,22 +1138,28 @@ function AdminLogin({ onLogin }: { onLogin: (password: string) => Promise<void> 
         </p>
         <h1 className="mt-2 text-2xl font-bold text-ink-900">Admin dashboard</h1>
         <p className="mt-2 text-sm leading-relaxed text-ink-500">
-          Sign in to view storefront analytics, Stripe summaries, and fulfillment status.
+          Sign in with the current hourly access code from the Discord ops channel. The code rotates
+          every hour and your session ends the moment it expires.
         </p>
         <label className="mt-6 block">
-          <span className="text-xs font-bold uppercase tracking-wider text-ink-500">Password</span>
+          <span className="text-xs font-bold uppercase tracking-wider text-ink-500">
+            Hourly access code
+          </span>
           <input
             type="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             autoFocus
-            className="mt-2 w-full border border-ink-200 px-3 py-3 text-sm outline-none transition focus:border-ink-600"
+            autoComplete="off"
+            spellCheck={false}
+            placeholder="12-character code from Discord"
+            className="mt-2 w-full border border-ink-200 px-3 py-3 font-mono text-sm tracking-[0.2em] outline-none transition focus:border-ink-600"
           />
         </label>
         {error && <p className="mt-3 text-sm text-rose-700">{error}</p>}
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || password.trim().length === 0}
           className="mt-5 w-full bg-ink-900 px-4 py-3 text-sm font-bold text-white transition hover:bg-ink-800 disabled:opacity-60"
         >
           {loading ? 'Signing in...' : 'Open dashboard'}
@@ -346,24 +1179,62 @@ export function Admin() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [orderFilter, setOrderFilter] = useState('all')
 
+  const logout = useCallback(() => {
+    sessionStorage.removeItem('amp-admin-token')
+    setDashboard(null)
+    setToken('')
+  }, [])
+
+  // Listen for forced logouts triggered anywhere in the tree by adminFetch on a
+  // 401 response (typically: hourly code rotated mid-session).
+  useEffect(() => {
+    function onForce() {
+      logout()
+      setError('Your session ended because the hourly access code rotated. Sign in with the new Discord code.')
+    }
+    window.addEventListener(ADMIN_LOGOUT_EVENT, onForce)
+    return () => window.removeEventListener(ADMIN_LOGOUT_EVENT, onForce)
+  }, [logout])
+
+  // Schedule a hard auto-logout the moment the JWT exp claim passes. We can't
+  // rely on background tabs firing setInterval reliably, so we re-check on
+  // visibility changes too.
+  useEffect(() => {
+    if (!token) return
+    const expMs = decodeJwtExpMs(token)
+    if (!expMs) return
+    const fire = () => {
+      logout()
+      setError('Your session expired. Sign in with the latest hourly Discord code.')
+    }
+    const msLeft = expMs - Date.now()
+    if (msLeft <= 0) {
+      fire()
+      return
+    }
+    const timer = window.setTimeout(fire, msLeft + 250)
+    function onVisibility() {
+      if (document.visibilityState === 'visible' && Date.now() >= expMs) fire()
+    }
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      window.clearTimeout(timer)
+      document.removeEventListener('visibilitychange', onVisibility)
+    }
+  }, [token, logout])
+
   const loadDashboard = useCallback(async () => {
     if (!token) return
     setLoading(true)
     setError('')
     try {
-      const response = await fetch(`/api/admin/dashboard?days=${days}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      const response = await adminFetch(token, `/api/admin/dashboard?days=${days}`)
       const data = await response.json()
       if (!response.ok) throw new Error(data.error || 'Could not load dashboard.')
       setDashboard(data)
     } catch (loadError) {
       const message = loadError instanceof Error ? loadError.message : 'Could not load dashboard.'
       setError(message)
-      if (message.toLowerCase().includes('expired')) {
-        sessionStorage.removeItem('amp-admin-token')
-        setToken('')
-      }
     } finally {
       setLoading(false)
     }
@@ -385,19 +1256,9 @@ export function Admin() {
     setToken(data.token)
   }
 
-  function logout() {
-    sessionStorage.removeItem('amp-admin-token')
-    setDashboard(null)
-    setToken('')
-  }
-
   async function updateFulfillment(order: Order, status: string) {
-    const response = await fetch(`/api/admin/orders/${order.id}`, {
+    const response = await adminFetch(token, `/api/admin/orders/${order.id}`, {
       method: 'PATCH',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify({
         status,
         trackingNumber: order.trackingNumber,
@@ -414,6 +1275,13 @@ export function Admin() {
     const orders = dashboard?.stripe.orders || []
     if (orderFilter === 'all') return orders
     if (orderFilter === 'paid') return orders.filter((order) => order.paymentStatus === 'paid')
+    if (orderFilter === 'unfulfilled') {
+      // Unfulfilled is a fulfillment workflow filter; unpaid orders are not yet
+      // real orders, so they should never surface here.
+      return orders.filter(
+        (order) => order.paymentStatus === 'paid' && order.fulfillmentStatus === 'unfulfilled'
+      )
+    }
     return orders.filter((order) => order.fulfillmentStatus === orderFilter)
   }, [dashboard, orderFilter])
 
@@ -513,6 +1381,11 @@ export function Admin() {
           <p className="py-24 text-center text-sm text-ink-500">Loading operations data...</p>
         ) : (
           <>
+            {activeTab === 'overview' && (
+              <div className="mt-6">
+                <RotatingCodeCard token={token} />
+              </div>
+            )}
             {activeTab === 'overview' && analytics && stripe && (
               <div className="mt-6 space-y-6">
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -586,6 +1459,17 @@ export function Admin() {
                   </Section>
                 </div>
               </div>
+            )}
+
+            {activeTab === 'manufacture' && (
+              <ManufactureTab token={token} onBatchSent={() => void loadDashboard()} />
+            )}
+
+            {activeTab === 'processing' && (
+              <ProcessingTab
+                orders={dashboard?.stripe.orders || []}
+                onSelectOrder={(order) => setSelectedOrder(order)}
+              />
             )}
 
             {activeTab === 'searches' && analytics && (
@@ -739,24 +1623,43 @@ export function Admin() {
 
       {selectedOrder && (
         <div className="fixed inset-0 z-50 flex justify-end bg-ink-950/40" onClick={() => setSelectedOrder(null)}>
-          <aside className="h-full w-full max-w-xl overflow-y-auto bg-white p-6 shadow-2xl" onClick={(event) => event.stopPropagation()}>
-            <div className="flex items-start justify-between gap-4">
-              <div><p className="text-xs font-bold uppercase tracking-wider text-accent-dark">Order details</p><h2 className="mt-1 font-mono text-sm text-ink-700">{selectedOrder.id}</h2></div>
-              <button type="button" onClick={() => setSelectedOrder(null)} className="text-sm font-bold text-ink-500 hover:text-ink-900">Close</button>
+          <aside className="flex h-full w-full max-w-xl flex-col bg-white shadow-2xl" onClick={(event) => event.stopPropagation()}>
+            <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-ink-200 bg-white px-6 py-4">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-bold uppercase tracking-wider text-accent-dark">Order details</p>
+                <h2 className="mt-1 break-all font-mono text-xs text-ink-700">{selectedOrder.id}</h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedOrder(null)}
+                aria-label="Close order details"
+                className="flex h-9 w-9 shrink-0 items-center justify-center border border-ink-200 text-ink-600 transition hover:border-ink-400 hover:text-ink-900"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
-            <div className="mt-6 grid grid-cols-2 gap-4 border-y border-ink-100 py-4 text-sm">
-              <div><p className="text-xs uppercase tracking-wider text-ink-400">Payment</p><div className="mt-2"><StatusBadge value={selectedOrder.paymentStatus} /></div></div>
-              <label><span className="text-xs uppercase tracking-wider text-ink-400">Fulfillment</span><select value={selectedOrder.fulfillmentStatus} onChange={(event) => setSelectedOrder({ ...selectedOrder, fulfillmentStatus: event.target.value })} className="mt-2 w-full border border-ink-200 px-2 py-2 text-sm">{fulfillmentStatuses.map((status) => <option key={status}>{status}</option>)}</select></label>
-            </div>
-            <div className="mt-6 space-y-5 text-sm">
-              <div><p className="text-xs font-bold uppercase tracking-wider text-ink-400">Customer</p><p className="mt-2 font-semibold">{selectedOrder.customerName || 'Guest'}</p><p className="text-ink-500">{selectedOrder.email}</p><p className="text-ink-500">{selectedOrder.phone}</p></div>
-              <div><p className="text-xs font-bold uppercase tracking-wider text-ink-400">Shipping</p><p className="mt-2 leading-relaxed text-ink-600">{address(selectedOrder.shipping?.address || null)}</p></div>
-              <div><p className="text-xs font-bold uppercase tracking-wider text-ink-400">Billing</p><p className="mt-2 leading-relaxed text-ink-600">{address(selectedOrder.billing?.address || null)}</p></div>
-              <div><p className="text-xs font-bold uppercase tracking-wider text-ink-400">Items</p>{selectedOrder.items.map((item) => <div key={`${item.name}-${item.quantity}`} className="mt-2 flex justify-between border-b border-ink-100 py-2"><span>{item.name} x {item.quantity}</span><span className="font-semibold">{money(item.total)}</span></div>)}</div>
-              <div className="flex justify-between border-t border-ink-200 pt-4 text-lg font-bold"><span>Total</span><span>{money(selectedOrder.total)}</span></div>
-              <label className="block"><span className="text-xs font-bold uppercase tracking-wider text-ink-400">Tracking number</span><input value={selectedOrder.trackingNumber} onChange={(event) => setSelectedOrder({ ...selectedOrder, trackingNumber: event.target.value })} className="mt-2 w-full border border-ink-200 px-3 py-2 text-sm outline-none focus:border-ink-600" /></label>
-              <label className="block"><span className="text-xs font-bold uppercase tracking-wider text-ink-400">Internal fulfillment note</span><textarea value={selectedOrder.note} onChange={(event) => setSelectedOrder({ ...selectedOrder, note: event.target.value })} rows={3} className="mt-2 w-full border border-ink-200 px-3 py-2 text-sm outline-none focus:border-ink-600" /></label>
-              <button type="button" onClick={() => void updateFulfillment(selectedOrder, selectedOrder.fulfillmentStatus)} className="w-full bg-ink-900 px-4 py-3 text-sm font-bold text-white transition hover:bg-ink-800">Save fulfillment update</button>
+            <div className="flex-1 overflow-y-auto px-6 pb-6 pt-4">
+              <div className="grid grid-cols-2 gap-4 border-b border-ink-100 pb-4 text-sm">
+                <div><p className="text-xs uppercase tracking-wider text-ink-400">Payment</p><div className="mt-2"><StatusBadge value={selectedOrder.paymentStatus} /></div></div>
+                <label><span className="text-xs uppercase tracking-wider text-ink-400">Fulfillment</span><select value={selectedOrder.fulfillmentStatus} onChange={(event) => setSelectedOrder({ ...selectedOrder, fulfillmentStatus: event.target.value })} className="mt-2 w-full border border-ink-200 px-2 py-2 text-sm">{fulfillmentStatuses.map((status) => <option key={status}>{status}</option>)}</select></label>
+              </div>
+              {selectedOrder.batchId && (
+                <div className="mt-4 border border-ink-200 bg-ink-50 p-3 text-xs text-ink-600">
+                  <span className="font-bold uppercase tracking-wider text-ink-500">Manufacture batch:</span>{' '}
+                  <span className="font-mono">{selectedOrder.batchId.slice(0, 8)}...</span> &middot;{' '}
+                  {selectedOrder.batchedAt ? date(selectedOrder.batchedAt) : '—'}
+                </div>
+              )}
+              <div className="mt-6 space-y-5 text-sm">
+                <div><p className="text-xs font-bold uppercase tracking-wider text-ink-400">Customer</p><p className="mt-2 font-semibold">{selectedOrder.customerName || 'Guest'}</p><p className="text-ink-500">{selectedOrder.email}</p><p className="text-ink-500">{selectedOrder.phone}</p></div>
+                <div><p className="text-xs font-bold uppercase tracking-wider text-ink-400">Shipping</p><p className="mt-2 leading-relaxed text-ink-600">{address(selectedOrder.shipping?.address || null)}</p></div>
+                <div><p className="text-xs font-bold uppercase tracking-wider text-ink-400">Billing</p><p className="mt-2 leading-relaxed text-ink-600">{address(selectedOrder.billing?.address || null)}</p></div>
+                <div><p className="text-xs font-bold uppercase tracking-wider text-ink-400">Items</p>{selectedOrder.items.map((item) => <div key={`${item.name}-${item.quantity}`} className="mt-2 flex justify-between border-b border-ink-100 py-2"><span>{item.name} x {item.quantity}</span><span className="font-semibold">{money(item.total)}</span></div>)}</div>
+                <div className="flex justify-between border-t border-ink-200 pt-4 text-lg font-bold"><span>Total</span><span>{money(selectedOrder.total)}</span></div>
+                <label className="block"><span className="text-xs font-bold uppercase tracking-wider text-ink-400">Tracking number</span><input value={selectedOrder.trackingNumber} onChange={(event) => setSelectedOrder({ ...selectedOrder, trackingNumber: event.target.value })} className="mt-2 w-full border border-ink-200 px-3 py-2 text-sm outline-none focus:border-ink-600" /></label>
+                <label className="block"><span className="text-xs font-bold uppercase tracking-wider text-ink-400">Internal fulfillment note</span><textarea value={selectedOrder.note} onChange={(event) => setSelectedOrder({ ...selectedOrder, note: event.target.value })} rows={3} className="mt-2 w-full border border-ink-200 px-3 py-2 text-sm outline-none focus:border-ink-600" /></label>
+                <button type="button" onClick={() => void updateFulfillment(selectedOrder, selectedOrder.fulfillmentStatus)} className="w-full bg-ink-900 px-4 py-3 text-sm font-bold text-white transition hover:bg-ink-800">Save fulfillment update</button>
+              </div>
             </div>
           </aside>
         </div>
