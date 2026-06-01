@@ -64,3 +64,49 @@ model NewsletterSubscriber {
   email     String   @unique
   createdAt DateTime @default(now())
 }
+
+model AnalyticsSession {
+  id              String           @id
+  visitorId       String?
+  entryPath       String
+  source          String?
+  referrer        String?
+  startedAt       DateTime         @default(now())
+  lastSeenAt      DateTime         @default(now())
+  durationSeconds Int              @default(0)
+  engaged         Boolean          @default(false)
+  pageViews       Int              @default(0)
+  checkoutStarted Boolean          @default(false)
+  converted       Boolean          @default(false)
+  events          AnalyticsEvent[]
+
+  @@index([startedAt])
+}
+
+model AnalyticsEvent {
+  id              String           @id @default(cuid())
+  sessionId       String
+  session         AnalyticsSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  visitorId       String?
+  type            String
+  path            String?
+  productSlug     String?
+  query           String?
+  source          String?
+  referrer        String?
+  value           Float?
+  durationSeconds Int              @default(0)
+  metadata        Json?
+  createdAt       DateTime         @default(now())
+
+  @@index([type, createdAt])
+  @@index([sessionId])
+}
+
+model FulfillmentRecord {
+  stripeSessionId String   @id
+  status          String   @default("unfulfilled")
+  trackingNumber  String?
+  note            String?
+  updatedAt       DateTime @updatedAt
+}

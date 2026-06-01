@@ -1,14 +1,19 @@
 import { useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { Logo } from '@/components/Logo'
 import { useCartStore } from '@/store/cart'
+import { trackEvent } from '@/lib/analytics'
 
 export function OrderSuccess() {
   const clearCart = useCartStore((s) => s.clearCart)
+  const [params] = useSearchParams()
 
   useEffect(() => {
+    trackEvent('purchase_return', {
+      metadata: { stripeSessionId: params.get('session_id') || '' },
+    })
     clearCart()
-  }, [clearCart])
+  }, [clearCart, params])
 
   return (
     <div className="mx-auto max-w-xl px-4 py-24 text-center">

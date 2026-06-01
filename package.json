@@ -9,6 +9,8 @@
     "server:start": "cd server && npm start",
     "stripe:sync": "node scripts/sync-stripe-catalog.mjs",
     "stripe:webhook": "node scripts/register-stripe-webhook.mjs",
+    "db:push": "prisma db push --schema=server/prisma/schema.prisma",
+    "vercel-build": "prisma generate --schema=server/prisma/schema.prisma && prisma migrate deploy --schema=server/prisma/schema.prisma && tsc -b && vite build",
     "build": "prisma generate --schema=server/prisma/schema.prisma && tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"

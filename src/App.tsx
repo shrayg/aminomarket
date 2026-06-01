@@ -21,10 +21,13 @@ import { Privacy } from './pages/Privacy'
 import { Returns } from './pages/Returns'
 import { Shipping } from './pages/Shipping'
 import { Terms } from './pages/Terms'
+import { Admin } from './pages/Admin'
+import { AnalyticsTracker } from './components/AnalyticsTracker'
 
 function App() {
   return (
     <>
+      <AnalyticsTracker />
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<Home />} />
@@ -48,6 +51,7 @@ function App() {
           <Route path="shipping" element={<Shipping />} />
           <Route path="terms" element={<Terms />} />
         </Route>
+        <Route path="/admin" element={<Admin />} />
       </Routes>
       <AgeVerification />
     </>

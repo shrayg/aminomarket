@@ -17,6 +17,7 @@ export type Product = {
   description?: string
   category?: string | { name: string }
   categorySlug?: string
+  researchAreas?: string[]
   inStock: boolean
   isFeatured: boolean
   isPreSale?: boolean
@@ -34,6 +35,9 @@ export function normalizeProduct(p: Record<string, unknown>): Product {
     description: typeof p.description === 'string' ? p.description : undefined,
     category: typeof cat?.name === 'string' ? cat.name : String(p.category || ''),
     categorySlug: cat?.slug || String(p.categorySlug || ''),
+    researchAreas: Array.isArray(p.researchAreas)
+      ? p.researchAreas.map((area) => String(area))
+      : [],
     inStock: Boolean(p.inStock),
     isFeatured: Boolean(p.isFeatured),
     isPreSale: Boolean(p.isPreSale),
@@ -46,6 +50,17 @@ export const categories = [
   { name: 'Research Formulations', slug: 'research-formulations', desc: 'Advanced formulations' },
   { name: 'Accessories', slug: 'accessories', desc: '' },
   { name: 'Pre-Sale', slug: 'pre-sale', desc: '' },
+]
+
+export const researchAreas = [
+  { name: 'Metabolic research', slug: 'metabolic-research' },
+  { name: 'Tissue response research', slug: 'tissue-response-research' },
+  { name: 'Growth hormone pathway research', slug: 'growth-hormone-pathway-research' },
+  { name: 'Cellular metabolism research', slug: 'cellular-metabolism-research' },
+  { name: 'Neuro research', slug: 'neuro-research' },
+  { name: 'Skin & pigmentation research', slug: 'skin-pigmentation-research' },
+  { name: 'Reproductive research', slug: 'reproductive-research' },
+  { name: 'Lab supplies', slug: 'lab-supplies' },
 ]
 
 export const staticProducts = productCatalog as Product[]

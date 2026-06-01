@@ -1,4 +1,5 @@
 import Stripe from 'stripe'
+import { markAnalyticsConversion } from '../services/analytics-store.js'
 
 const stripe = process.env.STRIPE_SECRET_KEY
   ? new Stripe(process.env.STRIPE_SECRET_KEY)
@@ -16,20 +17,21 @@ export async function stripeWebhook(req, res) {
       req.headers['stripe-signature'],
       process.env.STRIPE_WEBHOOK_SECRET
     )
-  } catch (err) {
+  } catch (error) {
     return res
       .status(400)
-      .json({ error: `Webhook signature verification failed: ${err.message}` })
+      .json({ error: `Webhook signature verification failed: ${error.message}` })
   }
 
-  // No database — Stripe Dashboard is the system of record for orders.
-  // Log the event so it shows up in Vercel function logs for troubleshooting.
   switch (event.type) {
     case 'checkout.session.completed':
     case 'checkout.session.async_payment_succeeded':
+      await markAnalyticsConversion(event.data.object?.metadata?.analyticsSessionId)
+      console.log(`[stripe] ${event.type} -> session=${event.data.object?.id}`)
+      break
     case 'checkout.session.async_payment_failed':
     case 'payment_intent.payment_failed':
-      console.log(`[stripe] ${event.type} → session=${event.data.object?.id}`)
+      console.log(`[stripe] ${event.type} -> session=${event.data.object?.id}`)
       break
     default:
       break

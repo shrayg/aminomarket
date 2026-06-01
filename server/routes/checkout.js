@@ -42,7 +42,7 @@ function resolveBaseUrl(req) {
 
 router.post('/', async (req, res) => {
   try {
-    const { items, email } = req.body
+    const { items, email, analyticsSessionId } = req.body
     if (!items?.length || !email) {
       return res.status(400).json({ error: 'Items and email required' })
     }
@@ -69,11 +69,16 @@ router.post('/', async (req, res) => {
         adjustable_quantity: { enabled: true, minimum: 1, maximum: 99 },
       })),
       mode: 'payment',
+      customer_creation: 'always',
       success_url: `${baseUrl}/order/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/cart`,
       customer_email: email,
+      billing_address_collection: 'required',
       shipping_address_collection: { allowed_countries: ['US'] },
       automatic_tax: { enabled: false },
+      metadata: analyticsSessionId
+        ? { analyticsSessionId: String(analyticsSessionId).slice(0, 100) }
+        : undefined,
     })
 
     res.json({ url: session.url })

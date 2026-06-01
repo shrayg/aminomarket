@@ -1,13 +1,15 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { FlaskConical } from 'lucide-react'
 import { useProduct } from '@/hooks/useProducts'
 import { AddToCartButton } from '@/components/AddToCartButton'
+import { trackEvent } from '@/lib/analytics'
 
 export function Product() {
   const { slug } = useParams()
   const { product, loading } = useProduct(slug)
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null)
+  const trackedProductSlug = useRef('')
 
   const selectedVariant = useMemo(() => {
     if (!product?.variants?.length) return undefined
@@ -16,6 +18,13 @@ export function Product() {
       product.variants[0]
     )
   }, [product, selectedVariantId])
+
+  useEffect(() => {
+    if (product && trackedProductSlug.current !== product.slug) {
+      trackedProductSlug.current = product.slug
+      trackEvent('product_view', { productSlug: product.slug })
+    }
+  }, [product])
 
   if (loading) {
     return (

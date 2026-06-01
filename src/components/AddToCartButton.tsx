@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { ShoppingCart, Check, Minus, Plus } from 'lucide-react'
 import { useCartStore } from '@/store/cart'
 import type { Product, ProductVariant } from '@/data/products'
+import { trackEvent } from '@/lib/analytics'
 
 const MIN_QTY = 1
 const MAX_QTY = 99
@@ -39,6 +40,11 @@ export function AddToCartButton({
       image,
       variantLabel,
     }, quantity)
+    trackEvent('add_to_cart', {
+      productSlug: product.slug,
+      value: price * quantity,
+      metadata: { quantity, itemId: id, variant: variantLabel || '' },
+    })
     setAdded(true)
     setTimeout(() => setAdded(false), 1500)
   }

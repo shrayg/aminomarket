@@ -8,6 +8,7 @@
     "description": "GLP-RT research reference material. 99% purity, third-party tested.",
     "category": "Research Peptides",
     "categorySlug": "research-peptides",
+    "researchAreas": ["metabolic-research"],
     "inStock": true,
     "isFeatured": true,
     "variants": [
@@ -30,6 +31,7 @@
     "description": "GHK-Cu research reference material. 99% purity, third-party tested.",
     "category": "Research Peptides",
     "categorySlug": "research-peptides",
+    "researchAreas": ["tissue-response-research", "skin-pigmentation-research"],
     "inStock": true,
     "isFeatured": true,
     "variants": [
@@ -46,6 +48,7 @@
     "description": "Tesamorelin research reference material. 99% purity, third-party tested.",
     "category": "Research Peptides",
     "categorySlug": "research-peptides",
+    "researchAreas": ["growth-hormone-pathway-research"],
     "inStock": true,
     "isFeatured": true,
     "variants": [
@@ -64,6 +67,7 @@
     "description": "BPC-157 + TB-500 research blend reference material. 99% purity, third-party tested.",
     "category": "Research Peptides",
     "categorySlug": "research-peptides",
+    "researchAreas": ["tissue-response-research"],
     "inStock": true,
     "isFeatured": true,
     "variants": [
@@ -80,6 +84,7 @@
     "description": "MT-2 research reference material. 99% purity, third-party tested.",
     "category": "Research Peptides",
     "categorySlug": "research-peptides",
+    "researchAreas": ["skin-pigmentation-research"],
     "inStock": true,
     "isFeatured": false,
     "variants": [
@@ -96,6 +101,7 @@
     "description": "GLP-TRZ research reference material. 99% purity, third-party tested.",
     "category": "Research Peptides",
     "categorySlug": "research-peptides",
+    "researchAreas": ["metabolic-research"],
     "inStock": true,
     "isFeatured": true,
     "variants": [
@@ -123,6 +129,7 @@
     "description": "MOTS-c research reference material. 99% purity, third-party tested.",
     "category": "Research Peptides",
     "categorySlug": "research-peptides",
+    "researchAreas": ["metabolic-research", "cellular-metabolism-research"],
     "inStock": true,
     "isFeatured": false,
     "variants": [
@@ -141,6 +148,7 @@
     "description": "BPC-157 10mg + TB-500 10mg + GHK-Cu 50mg research blend reference material.",
     "category": "Research Peptides",
     "categorySlug": "research-peptides",
+    "researchAreas": ["tissue-response-research", "skin-pigmentation-research"],
     "inStock": true,
     "isFeatured": true,
     "variants": [
@@ -156,6 +164,7 @@
     "description": "MT-1 research reference material. 99% purity, third-party tested.",
     "category": "Research Peptides",
     "categorySlug": "research-peptides",
+    "researchAreas": ["skin-pigmentation-research"],
     "inStock": true,
     "isFeatured": false,
     "variants": [
@@ -171,6 +180,7 @@
     "description": "Semax research reference material. 99% purity, third-party tested.",
     "category": "Research Peptides",
     "categorySlug": "research-peptides",
+    "researchAreas": ["neuro-research"],
     "inStock": true,
     "isFeatured": false,
     "variants": [
@@ -187,6 +197,7 @@
     "description": "Ipamorelin research reference material. 99% purity, third-party tested.",
     "category": "Research Peptides",
     "categorySlug": "research-peptides",
+    "researchAreas": ["growth-hormone-pathway-research"],
     "inStock": true,
     "isFeatured": false,
     "variants": [
@@ -204,6 +215,7 @@
     "description": "GLP-SEM research reference material. 99% purity, third-party tested.",
     "category": "Research Peptides",
     "categorySlug": "research-peptides",
+    "researchAreas": ["metabolic-research"],
     "inStock": true,
     "isFeatured": true,
     "variants": [
@@ -224,6 +236,7 @@
     "description": "BPC-157 research reference material. 99% purity, third-party tested.",
     "category": "Research Peptides",
     "categorySlug": "research-peptides",
+    "researchAreas": ["tissue-response-research"],
     "inStock": true,
     "isFeatured": false,
     "variants": [
@@ -241,6 +254,7 @@
     "description": "CJC-1295 with DAC research reference material. 99% purity, third-party tested.",
     "category": "Research Peptides",
     "categorySlug": "research-peptides",
+    "researchAreas": ["growth-hormone-pathway-research"],
     "inStock": true,
     "isFeatured": false,
     "variants": [
@@ -258,6 +272,7 @@
     "description": "GHK-Cu 50mg + BPC-157 10mg + TB-500 10mg + KPV 10mg research blend reference material.",
     "category": "Research Peptides",
     "categorySlug": "research-peptides",
+    "researchAreas": ["tissue-response-research", "skin-pigmentation-research"],
     "inStock": true,
     "isFeatured": false,
     "variants": [
@@ -273,6 +288,7 @@
     "description": "DSIP research reference material. 99% purity, third-party tested.",
     "category": "Research Peptides",
     "categorySlug": "research-peptides",
+    "researchAreas": ["neuro-research"],
     "inStock": true,
     "isFeatured": false,
     "variants": [
@@ -291,6 +307,7 @@
     "description": "CJC-1295 no DAC research reference material. 99% purity, third-party tested.",
     "category": "Research Peptides",
     "categorySlug": "research-peptides",
+    "researchAreas": ["growth-hormone-pathway-research"],
     "inStock": true,
     "isFeatured": false,
     "variants": [
@@ -308,6 +325,7 @@
     "description": "NAD+ research reference material. 99% purity, third-party tested.",
     "category": "Research Peptides",
     "categorySlug": "research-peptides",
+    "researchAreas": ["cellular-metabolism-research"],
     "inStock": true,
     "isFeatured": false,
     "variants": [
@@ -326,6 +344,7 @@
     "description": "Selank research reference material. 99% purity, third-party tested.",
     "category": "Research Peptides",
     "categorySlug": "research-peptides",
+    "researchAreas": ["neuro-research"],
     "inStock": true,
     "isFeatured": false,
     "variants": [
@@ -342,6 +361,7 @@
     "description": "HCG research reference material. 99% purity, third-party tested.",
     "category": "Research Peptides",
     "categorySlug": "research-peptides",
+    "researchAreas": ["reproductive-research"],
     "inStock": true,
     "isFeatured": false,
     "variants": [
@@ -358,6 +378,7 @@
     "description": "PT-141 research reference material. 99% purity, third-party tested.",
     "category": "Research Peptides",
     "categorySlug": "research-peptides",
+    "researchAreas": ["reproductive-research"],
     "inStock": true,
     "isFeatured": false,
     "variants": [
@@ -373,6 +394,7 @@
     "description": "Glutathione research reference material. 99% purity, third-party tested.",
     "category": "Research Peptides",
     "categorySlug": "research-peptides",
+    "researchAreas": ["cellular-metabolism-research"],
     "inStock": true,
     "isFeatured": false,
     "variants": [
@@ -390,6 +412,7 @@
     "description": "AOD-9604 research reference material. 99% purity, third-party tested.",
     "category": "Research Peptides",
     "categorySlug": "research-peptides",
+    "researchAreas": ["metabolic-research"],
     "inStock": true,
     "isFeatured": false,
     "variants": [
@@ -407,6 +430,7 @@
     "description": "Epithalon research reference material. 99% purity, third-party tested.",
     "category": "Research Peptides",
     "categorySlug": "research-peptides",
+    "researchAreas": ["cellular-metabolism-research"],
     "inStock": true,
     "isFeatured": false,
     "variants": [
@@ -423,6 +447,7 @@
     "description": "KPV research reference material. 99% purity, third-party tested.",
     "category": "Research Peptides",
     "categorySlug": "research-peptides",
+    "researchAreas": ["tissue-response-research"],
     "inStock": true,
     "isFeatured": false,
     "variants": [
@@ -439,6 +464,7 @@
     "description": "IGF-1 LR3 research reference material. 99% purity, third-party tested.",
     "category": "Research Peptides",
     "categorySlug": "research-peptides",
+    "researchAreas": ["growth-hormone-pathway-research"],
     "inStock": true,
     "isFeatured": false,
     "variants": [
@@ -456,6 +482,7 @@
     "description": "5-Amino-1MQ research reference material. 99% purity, third-party tested.",
     "category": "Research Peptides",
     "categorySlug": "research-peptides",
+    "researchAreas": ["metabolic-research"],
     "inStock": true,
     "isFeatured": false,
     "variants": [
@@ -474,6 +501,7 @@
     "description": "GHRP-6 research reference material. 99% purity, third-party tested.",
     "category": "Research Peptides",
     "categorySlug": "research-peptides",
+    "researchAreas": ["growth-hormone-pathway-research"],
     "inStock": true,
     "isFeatured": false,
     "variants": [
@@ -490,6 +518,7 @@
     "description": "Cerebrolysin research reference material. 99% purity, third-party tested.",
     "category": "Research Peptides",
     "categorySlug": "research-peptides",
+    "researchAreas": ["neuro-research"],
     "inStock": true,
     "isFeatured": false,
     "variants": [
@@ -505,6 +534,7 @@
     "description": "Kisspeptin research reference material. 99% purity, third-party tested.",
     "category": "Research Peptides",
     "categorySlug": "research-peptides",
+    "researchAreas": ["reproductive-research"],
     "inStock": true,
     "isFeatured": false,
     "variants": [
@@ -521,6 +551,7 @@
     "description": "L-Carnitine research reference material. Larger-format vial with the Aminomarket clinical label system.",
     "category": "Research Formulations",
     "categorySlug": "research-formulations",
+    "researchAreas": ["metabolic-research", "cellular-metabolism-research"],
     "inStock": true,
     "isFeatured": false,
     "variants": [
@@ -537,6 +568,7 @@
     "description": "Bacteriostatic Water in larger-format Aminomarket vial packaging.",
     "category": "Accessories",
     "categorySlug": "accessories",
+    "researchAreas": ["lab-supplies"],
     "inStock": true,
     "isFeatured": false,
     "variants": [
@@ -552,6 +584,7 @@
     "description": "3D-printed vial case for secure storage of up to 10 research vials.",
     "category": "Accessories",
     "categorySlug": "accessories",
+    "researchAreas": ["lab-supplies"],
     "inStock": true,
     "isFeatured": false
   }

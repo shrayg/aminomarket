@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 
 const STORAGE_KEY = 'amp-age-verified'
 
 export function AgeVerification() {
+  const location = useLocation()
   const [show, setShow] = useState(false)
 
   useEffect(() => {
@@ -16,11 +17,12 @@ export function AgeVerification() {
     const terms = (document.getElementById('terms-confirm') as HTMLInputElement)?.checked
     if (age && terms) {
       localStorage.setItem(STORAGE_KEY, 'true')
+      window.dispatchEvent(new Event('amp-consent'))
       setShow(false)
     }
   }
 
-  if (!show) return null
+  if (!show || location.pathname.startsWith('/admin')) return null
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-ink-950/90 backdrop-blur-sm">

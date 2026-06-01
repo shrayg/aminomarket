@@ -7,6 +7,8 @@ Full-stack e-commerce: **Vite + React + Tailwind** frontend + **Node.js/Express*
 1. **Push to GitHub** and import the repo in [Vercel](https://vercel.com).
 
 2. **Add environment variables** in Vercel project settings:
+   - `ADMIN_PASSWORD` - dashboard password; change before any deployment
+   - `ADMIN_JWT_SECRET` - separate random signing secret for admin sessions
    - `DATABASE_URL` – PostgreSQL connection string (use [Neon](https://neon.tech) free tier or Vercel Postgres)
    - `JWT_SECRET` – random string for auth
    - `FRONTEND_URL` – `https://aminomarket.shop` (or your Vercel URL)
@@ -30,6 +32,8 @@ Use PostgreSQL (Neon free tier, Docker, or local). Add the variables to the root
 ```
 DATABASE_URL="postgresql://user:pass@host:5432/db?sslmode=require"
 JWT_SECRET=dev-secret
+ADMIN_PASSWORD=kaimatsu
+ADMIN_JWT_SECRET=dev-admin-secret
 FRONTEND_URL=http://localhost:5173
 STRIPE_SECRET_KEY=sk_...
 STRIPE_WEBHOOK_SECRET=whsec_...
@@ -54,6 +58,9 @@ npm run dev
 
 Open http://localhost:5173. The Vite dev server proxies `/api` to the backend.
 
+The internal dashboard is available at http://localhost:5173/admin. The development
+fallback password is `kaimatsu`; production intentionally requires `ADMIN_PASSWORD`.
+
 ## Stack
 
 **Frontend:** Vite, React 18, React Router, Tailwind CSS, Zustand  
@@ -66,5 +73,7 @@ Open http://localhost:5173. The Vite dev server proxies `/api` to the backend.
 | `npm run dev` | Start frontend |
 | `npm run server` | Start backend |
 | `npm run build` | Build for production (Vercel) |
+| `npm run db:push` | Provision or update PostgreSQL tables for analytics and fulfillment |
+| `npm run vercel-build` | Apply tracked Prisma migrations and create the Vercel production bundle |
 | `npm run stripe:sync -- --apply --confirm-stripe-approval` | Create or update the Stripe Product and Price catalog from `catalog/products.json` |
 | `npm run stripe:webhook -- --apply --confirm-stripe-approval` | Register the production Stripe webhook and save its signing secret locally |

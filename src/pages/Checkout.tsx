@@ -1,11 +1,13 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Logo } from '@/components/Logo'
 import { useCartStore } from '@/store/cart'
+import { getAnalyticsSessionId, trackEvent } from '@/lib/analytics'
 
 export function Checkout() {
   const { items, getTotal } = useCartStore()
   const navigate = useNavigate()
+  const checkoutTracked = useRef(false)
   const [loading, setLoading] = useState(false)
   const [form, setForm] = useState({
     email: '',
@@ -15,6 +17,16 @@ export function Checkout() {
     state: '',
     zip: '',
   })
+
+  useEffect(() => {
+    if (items.length > 0 && !checkoutTracked.current) {
+      checkoutTracked.current = true
+      trackEvent('checkout_started', {
+        value: getTotal(),
+        metadata: { itemCount: items.reduce((sum, item) => sum + item.quantity, 0) },
+      })
+    }
+  }, [getTotal, items])
 
   if (items.length === 0 && !loading) {
     return (
@@ -37,7 +49,9 @@ export function Checkout() {
         items: items.map((i) => ({ id: i.id, quantity: i.quantity })),
         email: form.email,
         shipping: form,
+        analyticsSessionId: getAnalyticsSessionId(),
       })
+      trackEvent('checkout_redirect', { value: getTotal() })
       if (res.url && res.url.startsWith('http')) {
         window.location.href = res.url
       } else {

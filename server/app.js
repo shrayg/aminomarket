@@ -6,6 +6,8 @@ import newsletterRouter from './routes/newsletter.js'
 import contactRouter from './routes/contact.js'
 import checkoutRouter from './routes/checkout.js'
 import ordersRouter from './routes/orders.js'
+import analyticsRouter from './routes/analytics.js'
+import adminRouter from './routes/admin.js'
 import { stripeWebhook } from './routes/stripe-webhook.js'
 
 const app = express()
@@ -36,6 +38,8 @@ app.use('/api/newsletter', newsletterRouter)
 app.use('/api/contact', contactRouter)
 app.use('/api/checkout', checkoutRouter)
 app.use('/api/orders', ordersRouter)
+app.use('/api/analytics', analyticsRouter)
+app.use('/api/admin', adminRouter)
 
 app.get('/api/health', (_, res) => res.json({ ok: true }))
 

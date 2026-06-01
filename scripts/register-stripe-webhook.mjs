@@ -9,6 +9,8 @@ const endpointUrl = 'https://aminomarket.shop/api/stripe/webhook'
 const enabledEvents = [
   'checkout.session.completed',
   'checkout.session.async_payment_succeeded',
+  'checkout.session.async_payment_failed',
+  'payment_intent.payment_failed',
 ]
 
 if (!apply) {
@@ -37,12 +39,17 @@ const endpoints = await stripe.webhookEndpoints.list({ limit: 100 })
 const existing = endpoints.data.find((endpoint) => endpoint.url === endpointUrl)
 
 if (existing) {
+  await stripe.webhookEndpoints.update(existing.id, {
+    enabled_events: enabledEvents,
+    description: 'Aminomarket checkout payment completion and failure tracking',
+  })
   console.log({
     created: false,
+    updated: true,
     endpointId: existing.id,
     endpointUrl: existing.url,
     status: existing.status,
-    note: 'Endpoint already exists. Stripe only returns its signing secret at creation time.',
+    note: 'Endpoint events updated. Stripe only returns its signing secret at creation time.',
   })
   process.exit(0)
 }
@@ -50,7 +57,7 @@ if (existing) {
 const endpoint = await stripe.webhookEndpoints.create({
   url: endpointUrl,
   enabled_events: enabledEvents,
-  description: 'Aminomarket checkout payment completion',
+  description: 'Aminomarket checkout payment completion and failure tracking',
 })
 
 saveLocalWebhookSecret(endpoint.secret)
