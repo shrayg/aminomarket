@@ -86,6 +86,10 @@ type RotatingCode = {
   expiresInSeconds: number
 }
 
+type ChartRange = '15m' | '1h' | '1d' | '1w' | '1mo' | '1y' | 'all'
+type SeriesPoint = { bucketStart: string; bucketEnd: string; value: number }
+type RangeSeries = Record<ChartRange, SeriesPoint[]>
+
 type Dashboard = {
   generatedAt: string
   days: number
@@ -108,6 +112,13 @@ type Dashboard = {
       productViews: number
       checkoutStarts: number
     }[]
+    series: {
+      visits: RangeSeries
+      engagedVisits: RangeSeries
+      productViews: RangeSeries
+      addToCarts: RangeSeries
+      checkoutStarts: RangeSeries
+    }
     topPaths: Entry[]
     trafficSources: Entry[]
     products: { slug: string; views: number; addsToCart: number }[]
@@ -125,6 +136,8 @@ type Dashboard = {
     orders: Order[]
     customers: Customer[]
     dailyRevenue: Entry[]
+    revenueSeries: RangeSeries
+    paidOrderSeries: RangeSeries
     paymentStatuses: Entry[]
     purchasedProducts: Entry[]
   }
@@ -293,52 +306,128 @@ function BarList({
   )
 }
 
-function DailyChart({
+const CHART_RANGES: { id: ChartRange; label: string; full: string }[] = [
+  { id: '15m', label: '15m', full: 'Last 15 minutes' },
+  { id: '1h', label: '1h', full: 'Last hour' },
+  { id: '1d', label: '1d', full: 'Last 24 hours' },
+  { id: '1w', label: '1w', full: 'Last week' },
+  { id: '1mo', label: '1mo', full: 'Last 30 days' },
+  { id: '1y', label: '1y', full: 'Last 12 months' },
+  { id: 'all', label: 'All', full: 'All time' },
+]
+
+function formatBucketLabel(range: ChartRange, iso: string) {
+  const d = new Date(iso)
+  if (range === '15m' || range === '1h' || range === '1d') {
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  }
+  if (range === '1w' || range === '1mo') {
+    return d.toLocaleDateString([], { month: 'short', day: 'numeric' })
+  }
+  return d.toLocaleDateString([], { month: 'short', year: '2-digit' })
+}
+
+function ChartRangeToggle({
+  value,
+  onChange,
+}: {
+  value: ChartRange
+  onChange: (next: ChartRange) => void
+}) {
+  return (
+    <div
+      role="group"
+      aria-label="Chart time range"
+      className="flex flex-wrap gap-0.5 border border-ink-200 bg-ink-50 p-0.5"
+    >
+      {CHART_RANGES.map((option) => {
+        const active = option.id === value
+        return (
+          <button
+            key={option.id}
+            type="button"
+            onClick={() => onChange(option.id)}
+            aria-pressed={active}
+            title={option.full}
+            className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider transition ${
+              active ? 'bg-ink-900 text-white' : 'text-ink-600 hover:text-ink-900'
+            }`}
+          >
+            {option.label}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+function RangeChart({
   title,
   subtitle,
-  rows,
-  valueKey,
-  color = 'bg-ink-900',
+  series,
+  range,
+  onRangeChange,
   formatValue = compactNumber,
+  color = 'bg-ink-900',
 }: {
   title: string
   subtitle: string
-  rows: { date: string; [key: string]: string | number }[]
-  valueKey: string
-  color?: string
+  series: RangeSeries | undefined
+  range: ChartRange
+  onRangeChange: (next: ChartRange) => void
   formatValue?: (value: number) => string
+  color?: string
 }) {
-  const visible = rows.slice(-14)
-  const values = visible.map((row) => Number(row[valueKey] || 0))
+  const points = series?.[range] ?? []
+  const values = points.map((p) => Number(p.value || 0))
   const max = Math.max(...values, 1)
   const total = values.reduce((sum, value) => sum + value, 0)
+  const rangeMeta = CHART_RANGES.find((r) => r.id === range)
+  const firstLabel = points[0] ? formatBucketLabel(range, points[0].bucketStart) : ''
+  const lastLabel = points[points.length - 1]
+    ? formatBucketLabel(range, points[points.length - 1].bucketStart)
+    : ''
 
   return (
     <section className="border border-ink-200 bg-white p-5">
-      <div className="flex items-end justify-between gap-3">
-        <div>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div className="min-w-0">
           <h2 className="font-bold text-ink-900">{title}</h2>
-          <p className="mt-1 text-xs text-ink-500">{subtitle}</p>
+          <p className="mt-1 text-xs text-ink-500">
+            {subtitle}
+            {rangeMeta ? ` \u00b7 ${rangeMeta.full.toLowerCase()}` : ''}
+          </p>
         </div>
-        <p className="text-lg font-bold text-ink-900">{formatValue(total)}</p>
+        <div className="flex items-center gap-3">
+          <ChartRangeToggle value={range} onChange={onRangeChange} />
+          <p className="text-lg font-bold text-ink-900">{formatValue(total)}</p>
+        </div>
       </div>
-      <div className="mt-6 flex h-40 items-end gap-2">
-        {visible.map((row) => {
-          const value = Number(row[valueKey] || 0)
-          return (
-            <div key={row.date} className="group flex min-w-0 flex-1 flex-col items-center justify-end">
+      <div className="mt-6 flex h-40 items-end gap-1">
+        {points.length === 0 ? (
+          <p className="m-auto text-sm text-ink-400">No data in this window.</p>
+        ) : (
+          points.map((point) => {
+            const value = Number(point.value || 0)
+            const label = formatBucketLabel(range, point.bucketStart)
+            return (
               <div
-                title={`${row.date}: ${formatValue(value)}`}
-                className={`w-full min-w-1 transition group-hover:opacity-70 ${color}`}
-                style={{ height: `${Math.max(3, (value / max) * 100)}%` }}
-              />
-            </div>
-          )
-        })}
+                key={point.bucketStart}
+                className="group flex min-w-0 flex-1 flex-col items-center justify-end"
+              >
+                <div
+                  title={`${label}: ${formatValue(value)}`}
+                  className={`w-full min-w-1 transition group-hover:opacity-70 ${color}`}
+                  style={{ height: `${Math.max(value > 0 ? 6 : 1, (value / max) * 100)}%` }}
+                />
+              </div>
+            )
+          })
+        )}
       </div>
       <div className="mt-2 flex justify-between text-[10px] text-ink-400">
-        <span>{visible[0]?.date || 'No data'}</span>
-        <span>{visible[visible.length - 1]?.date || ''}</span>
+        <span>{firstLabel || 'No data'}</span>
+        <span>{lastLabel}</span>
       </div>
     </section>
   )
@@ -1230,6 +1319,10 @@ export function Admin() {
   const [activeTab, setActiveTab] = useState<Tab>('overview')
   const [days, setDays] = useState(30)
   const [engagedThreshold, setEngagedThreshold] = useState<EngagedThreshold>(5)
+  const [visitsRange, setVisitsRange] = useState<ChartRange>('1mo')
+  const [revenueRange, setRevenueRange] = useState<ChartRange>('1mo')
+  const [productViewsRange, setProductViewsRange] = useState<ChartRange>('1mo')
+  const [checkoutStartsRange, setCheckoutStartsRange] = useState<ChartRange>('1mo')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
@@ -1356,8 +1449,10 @@ export function Admin() {
     analytics?.metrics.visits && analytics
       ? (analytics.metrics.engagedVisits / analytics.metrics.visits) * 100
       : 0
-  const stripeRevenueRows =
-    stripe?.dailyRevenue.map((row) => ({ date: row.name, revenue: row.value })) || []
+  const visitsSeries = analytics?.series?.visits
+  const revenueSeries = stripe?.revenueSeries
+  const productViewsSeries = analytics?.series?.productViews
+  const checkoutStartsSeries = analytics?.series?.checkoutStarts
 
   return (
     <div className="min-h-screen bg-ink-50 text-ink-900">
@@ -1465,8 +1560,22 @@ export function Admin() {
                   <MetricCard label="Checkout conversion" value={`${checkoutConversion.toFixed(1)}%`} note={`${analytics.metrics.checkoutStarts} tracked checkout starts`} icon={ShoppingCart} />
                 </div>
                 <div className="grid gap-6 xl:grid-cols-2">
-                  <DailyChart title="Visits" subtitle="Last 14 days of first-party storefront sessions" rows={analytics.daily} valueKey="visits" />
-                  <DailyChart title="Paid revenue" subtitle="Recent Stripe Checkout revenue" rows={stripeRevenueRows} valueKey="revenue" color="bg-accent-dark" formatValue={money} />
+                  <RangeChart
+                    title="Visits"
+                    subtitle="First-party storefront sessions"
+                    series={visitsSeries}
+                    range={visitsRange}
+                    onRangeChange={setVisitsRange}
+                  />
+                  <RangeChart
+                    title="Paid revenue"
+                    subtitle="Stripe Checkout revenue"
+                    series={revenueSeries}
+                    range={revenueRange}
+                    onRangeChange={setRevenueRange}
+                    color="bg-accent-dark"
+                    formatValue={money}
+                  />
                 </div>
                 <div className="grid gap-6 xl:grid-cols-3">
                   <Section title="Conversion funnel" subtitle="Tracked storefront progression">
@@ -1508,8 +1617,21 @@ export function Admin() {
                   <MetricCard label="Checkout starts" value={compactNumber(analytics.metrics.checkoutStarts)} note="Visits reaching checkout" icon={PackageCheck} />
                 </div>
                 <div className="grid gap-6 xl:grid-cols-2">
-                  <DailyChart title="Product interest" subtitle="Product-detail views over the last 14 days" rows={analytics.daily} valueKey="productViews" />
-                  <DailyChart title="Checkout starts" subtitle="Checkout intent over the last 14 days" rows={analytics.daily} valueKey="checkoutStarts" color="bg-accent-dark" />
+                  <RangeChart
+                    title="Product interest"
+                    subtitle="Product-detail views"
+                    series={productViewsSeries}
+                    range={productViewsRange}
+                    onRangeChange={setProductViewsRange}
+                  />
+                  <RangeChart
+                    title="Checkout starts"
+                    subtitle="Checkout intent"
+                    series={checkoutStartsSeries}
+                    range={checkoutStartsRange}
+                    onRangeChange={setCheckoutStartsRange}
+                    color="bg-accent-dark"
+                  />
                 </div>
                 <div className="grid gap-6 xl:grid-cols-2">
                   <Section title="Product interactions" subtitle="Detail-page views and add-to-cart actions">
@@ -1691,7 +1813,15 @@ export function Admin() {
                   <MetricCard label="Open checkouts" value={compactNumber(stripe.metrics.openCheckouts)} note="Stripe sessions still in progress" icon={ShoppingCart} />
                 </div>
                 <div className="grid gap-6 xl:grid-cols-2">
-                  <DailyChart title="Revenue trend" subtitle="Paid Stripe Checkout sessions" rows={stripeRevenueRows} valueKey="revenue" color="bg-accent-dark" formatValue={money} />
+                  <RangeChart
+                    title="Revenue trend"
+                    subtitle="Paid Stripe Checkout sessions"
+                    series={revenueSeries}
+                    range={revenueRange}
+                    onRangeChange={setRevenueRange}
+                    color="bg-accent-dark"
+                    formatValue={money}
+                  />
                   <Section title="Payment states" subtitle="Recent Stripe Checkout session status">
                     <BarList rows={stripe.paymentStatuses} />
                   </Section>

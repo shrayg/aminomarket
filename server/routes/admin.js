@@ -108,6 +108,80 @@ function normalizeEngagedThreshold(value) {
     : DEFAULT_ENGAGED_THRESHOLD_SECONDS
 }
 
+// ---------------------------------------------------------------------------
+// Time-series bucketing for the admin charts. Every chart card on the
+// dashboard can independently switch between these windows; the server
+// pre-computes one series per range so the client just picks the one to
+// render.
+// ---------------------------------------------------------------------------
+const CHART_RANGES = ['15m', '1h', '1d', '1w', '1mo', '1y', 'all']
+const SECOND = 1000
+const MINUTE = 60 * SECOND
+const HOUR = 60 * MINUTE
+const DAY = 24 * HOUR
+
+function rangeWindow(range, now, earliestMs) {
+  switch (range) {
+    case '15m':
+      return { count: 15, bucketMs: MINUTE, startMs: now - 15 * MINUTE, endMs: now }
+    case '1h':
+      return { count: 12, bucketMs: 5 * MINUTE, startMs: now - HOUR, endMs: now }
+    case '1d':
+      return { count: 24, bucketMs: HOUR, startMs: now - 24 * HOUR, endMs: now }
+    case '1w':
+      return { count: 7, bucketMs: DAY, startMs: now - 7 * DAY, endMs: now }
+    case '1mo':
+      return { count: 30, bucketMs: DAY, startMs: now - 30 * DAY, endMs: now }
+    case '1y':
+      // 30-day months are accurate enough for chart visualization; the bucket
+      // labels render as month names so the slight calendar drift isn't seen.
+      return { count: 12, bucketMs: 30 * DAY, startMs: now - 365 * DAY, endMs: now }
+    case 'all': {
+      // Anchor "all time" to the earliest observed timestamp (or 1y if there
+      // is none yet) and divide into 12-24 even buckets so the chart never
+      // collapses to a single bar.
+      const start = Number.isFinite(earliestMs) ? Math.min(earliestMs, now - DAY) : now - 365 * DAY
+      const totalMs = Math.max(now - start, DAY)
+      const count = Math.min(24, Math.max(6, Math.ceil(totalMs / (30 * DAY))))
+      const bucketMs = Math.ceil(totalMs / count)
+      return { count, bucketMs, startMs: now - count * bucketMs, endMs: now }
+    }
+    default:
+      return { count: 30, bucketMs: DAY, startMs: now - 30 * DAY, endMs: now }
+  }
+}
+
+function emptyBuckets({ count, bucketMs, startMs }) {
+  return Array.from({ length: count }, (_, i) => ({
+    bucketStart: new Date(startMs + i * bucketMs).toISOString(),
+    bucketEnd: new Date(startMs + (i + 1) * bucketMs).toISOString(),
+    value: 0,
+  }))
+}
+
+function bucketSeries(samples, range, earliestMs, now = Date.now()) {
+  const window = rangeWindow(range, now, earliestMs)
+  const buckets = emptyBuckets(window)
+  for (const sample of samples) {
+    const ts = sample.ts
+    if (!Number.isFinite(ts) || ts < window.startMs || ts >= window.endMs) continue
+    const idx = Math.floor((ts - window.startMs) / window.bucketMs)
+    if (idx >= 0 && idx < buckets.length) {
+      buckets[idx].value += Number.isFinite(sample.value) ? sample.value : 1
+    }
+  }
+  return buckets
+}
+
+function buildRangeSeries(samples, earliestMs) {
+  const out = {}
+  const now = Date.now()
+  for (const range of CHART_RANGES) {
+    out[range] = bucketSeries(samples, range, earliestMs, now)
+  }
+  return out
+}
+
 function buildAnalyticsSummary({ sessions, events, storageMode }, days, engagedThresholdSeconds) {
   const threshold = normalizeEngagedThreshold(engagedThresholdSeconds)
   const daily = new Map()
@@ -185,6 +259,30 @@ function buildAnalyticsSummary({ sessions, events, storageMode }, days, engagedT
       )
     : 0
 
+  const visitSamples = sessions.map((s) => ({ ts: +new Date(s.startedAt), value: 1 }))
+  const engagedSamples = engagedSessions.map((s) => ({ ts: +new Date(s.startedAt), value: 1 }))
+  const productViewSamples = events
+    .filter((e) => e.type === 'product_view')
+    .map((e) => ({ ts: +new Date(e.createdAt), value: 1 }))
+  const addToCartSamples = events
+    .filter((e) => e.type === 'add_to_cart')
+    .map((e) => ({ ts: +new Date(e.createdAt), value: 1 }))
+  const checkoutStartSamples = events
+    .filter((e) => e.type === 'checkout_started')
+    .map((e) => ({ ts: +new Date(e.createdAt), value: 1 }))
+
+  // Earliest timestamp across all analytics sources anchors the "all time"
+  // chart range; if there is no data yet, the bucketer falls back to 1 year.
+  const earliestMs = [
+    ...visitSamples,
+    ...productViewSamples,
+    ...addToCartSamples,
+    ...checkoutStartSamples,
+  ].reduce(
+    (min, sample) => (Number.isFinite(sample.ts) && sample.ts < min ? sample.ts : min),
+    Number.POSITIVE_INFINITY
+  )
+
   return {
     storageMode,
     engagedThresholdSeconds: threshold,
@@ -199,6 +297,13 @@ function buildAnalyticsSummary({ sessions, events, storageMode }, days, engagedT
       trackedConversions: convertedSessions.length,
     },
     daily: [...daily.values()],
+    series: {
+      visits: buildRangeSeries(visitSamples, earliestMs),
+      engagedVisits: buildRangeSeries(engagedSamples, earliestMs),
+      productViews: buildRangeSeries(productViewSamples, earliestMs),
+      addToCarts: buildRangeSeries(addToCartSamples, earliestMs),
+      checkoutStarts: buildRangeSeries(checkoutStartSamples, earliestMs),
+    },
     topPaths: topEntries(paths),
     trafficSources: topEntries(traffic),
     products: [...products.values()].sort(
@@ -206,6 +311,15 @@ function buildAnalyticsSummary({ sessions, events, storageMode }, days, engagedT
     ),
     searches: [...searches.values()].sort((a, b) => b.count - a.count),
   }
+}
+
+function emptyStripeSeries() {
+  const out = {}
+  const now = Date.now()
+  for (const range of CHART_RANGES) {
+    out[range] = emptyBuckets(rangeWindow(range, now, Number.POSITIVE_INFINITY))
+  }
+  return out
 }
 
 async function stripeSummary(days, fulfillmentById) {
@@ -217,6 +331,8 @@ async function stripeSummary(days, fulfillmentById) {
       customers: [],
       metrics: { paidOrders: 0, revenue: 0, averageOrderValue: 0, openCheckouts: 0 },
       dailyRevenue: [],
+      revenueSeries: emptyStripeSeries(),
+      paidOrderSeries: emptyStripeSeries(),
       paymentStatuses: [],
       purchasedProducts: [],
     }
@@ -266,6 +382,19 @@ async function stripeSummary(days, fulfillmentById) {
       customers.set(customerKey, customer)
     }
 
+    const revenueSamples = paidOrders.map((order) => ({
+      ts: +new Date(order.createdAt),
+      value: order.total,
+    }))
+    const paidOrderSamples = paidOrders.map((order) => ({
+      ts: +new Date(order.createdAt),
+      value: 1,
+    }))
+    const earliestStripeMs = revenueSamples.reduce(
+      (min, sample) => (Number.isFinite(sample.ts) && sample.ts < min ? sample.ts : min),
+      Number.POSITIVE_INFINITY
+    )
+
     return {
       configured: true,
       warning: response.has_more
@@ -280,6 +409,8 @@ async function stripeSummary(days, fulfillmentById) {
         openCheckouts: orders.filter((order) => order.checkoutStatus === 'open').length,
       },
       dailyRevenue: topEntries(dailyRevenue, days).sort((a, b) => a.name.localeCompare(b.name)),
+      revenueSeries: buildRangeSeries(revenueSamples, earliestStripeMs),
+      paidOrderSeries: buildRangeSeries(paidOrderSamples, earliestStripeMs),
       paymentStatuses: topEntries(paymentStatuses),
       purchasedProducts: topEntries(purchasedProducts),
     }
@@ -292,6 +423,8 @@ async function stripeSummary(days, fulfillmentById) {
       customers: [],
       metrics: { paidOrders: 0, revenue: 0, averageOrderValue: 0, openCheckouts: 0 },
       dailyRevenue: [],
+      revenueSeries: emptyStripeSeries(),
+      paidOrderSeries: emptyStripeSeries(),
       paymentStatuses: [],
       purchasedProducts: [],
     }
@@ -331,15 +464,19 @@ router.post('/login', (req, res) => {
 router.get('/dashboard', requireAdmin, async (req, res) => {
   const days = Math.min(90, Math.max(7, Number(req.query.days) || 30))
   const engagedThresholdSeconds = normalizeEngagedThreshold(req.query.engagedThreshold)
+  // Always pull a year of analytics so the chart range selector (15m -> 1y ->
+  // all time) has data to bucket regardless of the metric-card window. The
+  // memory/Supabase row limits in listAnalytics keep this bounded.
+  const seriesLookbackDays = Math.max(days, 365)
   const [analytics, fulfillments, registeredUsers] = await Promise.all([
-    listAnalytics(days),
+    listAnalytics(seriesLookbackDays),
     listFulfillments(),
     listRegisteredUsers(),
   ])
   const fulfillmentById = new Map(
     fulfillments.map((record) => [record.stripeSessionId, record])
   )
-  const stripeData = await stripeSummary(days, fulfillmentById)
+  const stripeData = await stripeSummary(seriesLookbackDays, fulfillmentById)
 
   res.json({
     generatedAt: new Date().toISOString(),
