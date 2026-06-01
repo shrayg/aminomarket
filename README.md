@@ -16,6 +16,9 @@ Full-stack e-commerce: **Vite + React + Tailwind** frontend and **Node.js/Expres
    - `FRONTEND_URL` - `https://aminomarket.shop`
    - `STRIPE_SECRET_KEY` - server-side Stripe key for Checkout Sessions
    - `STRIPE_WEBHOOK_SECRET` - signing secret for `https://aminomarket.shop/api/stripe/webhook`
+   - `DISCORD_SIGNUPS_WEBHOOK_URL` - restricted operations channel for account signups
+   - `DISCORD_PAYMENTS_WEBHOOK_URL` - restricted operations channel for payment events
+   - `DISCORD_FULFILLMENT_WEBHOOK_URL` - restricted operations channel for paid orders
 
 3. Link and apply the tracked Supabase migration once:
 
@@ -41,6 +44,9 @@ ADMIN_JWT_SECRET=dev-admin-secret
 FRONTEND_URL=http://localhost:5173
 STRIPE_SECRET_KEY=sk_...
 STRIPE_WEBHOOK_SECRET=whsec_...
+DISCORD_SIGNUPS_WEBHOOK_URL=https://discord.com/api/webhooks/...
+DISCORD_PAYMENTS_WEBHOOK_URL=https://discord.com/api/webhooks/...
+DISCORD_FULFILLMENT_WEBHOOK_URL=https://discord.com/api/webhooks/...
 ```
 
 Keep `SUPABASE_SERVICE_ROLE_KEY` on the server only. Never expose it through a `VITE_` variable.

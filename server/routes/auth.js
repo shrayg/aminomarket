@@ -2,6 +2,7 @@ import { Router } from 'express'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { getSupabase, throwIfSupabaseError } from '../lib/supabase.js'
+import { notifyNewSignup } from '../services/discord-notifications.js'
 
 const router = Router()
 const JWT_SECRET = process.env.JWT_SECRET || 'change-me-in-production'
@@ -37,6 +38,11 @@ router.post('/register', async (req, res) => {
       .select('id, email, name')
       .single()
     throwIfSupabaseError(createError)
+    try {
+      await notifyNewSignup({ ...user, createdAt: new Date() })
+    } catch (notificationError) {
+      console.error(`[discord] signup notification failed: ${notificationError.message}`)
+    }
 
     const token = jwt.sign(
       { id: user.id, email: user.email },

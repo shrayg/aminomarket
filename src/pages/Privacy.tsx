@@ -20,7 +20,9 @@ export function Privacy() {
           <p className="mt-2">
             Payments are processed by Stripe. Stripe Checkout collects the billing, shipping, and
             payment information needed to process an order. Aminomarket does not store full card
-            numbers or card security codes.
+            numbers or card security codes. Order, payment-status, account-contact, and shipping
+            details may be sent to restricted internal operations channels used to fulfill orders
+            and support customers.
           </p>
         </section>
         <section>

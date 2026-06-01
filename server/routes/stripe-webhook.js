@@ -1,5 +1,10 @@
 import Stripe from 'stripe'
 import { markAnalyticsConversion } from '../services/analytics-store.js'
+import {
+  notifyFailedPayment,
+  notifyPaidCheckout,
+  notifyReadyForFulfillment,
+} from '../services/discord-notifications.js'
 
 const stripe = process.env.STRIPE_SECRET_KEY
   ? new Stripe(process.env.STRIPE_SECRET_KEY)
@@ -23,18 +28,39 @@ export async function stripeWebhook(req, res) {
       .json({ error: `Webhook signature verification failed: ${error.message}` })
   }
 
-  switch (event.type) {
-    case 'checkout.session.completed':
-    case 'checkout.session.async_payment_succeeded':
-      await markAnalyticsConversion(event.data.object?.metadata?.analyticsSessionId)
-      console.log(`[stripe] ${event.type} -> session=${event.data.object?.id}`)
-      break
-    case 'checkout.session.async_payment_failed':
-    case 'payment_intent.payment_failed':
-      console.log(`[stripe] ${event.type} -> session=${event.data.object?.id}`)
-      break
-    default:
-      break
+  try {
+    switch (event.type) {
+      case 'checkout.session.completed':
+      case 'checkout.session.async_payment_succeeded': {
+        const session = await stripe.checkout.sessions.retrieve(event.data.object.id, {
+          expand: ['customer', 'line_items', 'payment_intent'],
+        })
+        await markAnalyticsConversion(session.metadata?.analyticsSessionId)
+        if (session.payment_status === 'paid') {
+          await notifyPaidCheckout(session, event.type)
+          await notifyReadyForFulfillment(session)
+        }
+        console.log(`[stripe] ${event.type} -> session=${session.id}`)
+        break
+      }
+      case 'checkout.session.async_payment_failed': {
+        const session = await stripe.checkout.sessions.retrieve(event.data.object.id, {
+          expand: ['customer', 'line_items', 'payment_intent'],
+        })
+        await notifyFailedPayment(session, event.type)
+        console.log(`[stripe] ${event.type} -> session=${session.id}`)
+        break
+      }
+      case 'payment_intent.payment_failed':
+        await notifyFailedPayment(event.data.object, event.type)
+        console.log(`[stripe] ${event.type} -> payment_intent=${event.data.object.id}`)
+        break
+      default:
+        break
+    }
+  } catch (error) {
+    console.error(`[stripe] webhook handling failed for ${event.type}: ${error.message}`)
+    return res.status(502).json({ error: 'Webhook delivery failed; Stripe should retry.' })
   }
 
   res.json({ received: true })
