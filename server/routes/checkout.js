@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import Stripe from 'stripe'
 import { getCheckoutItem } from '../catalog.js'
+import { getRequestUser } from '../middleware/user-auth.js'
 
 const router = Router()
 
@@ -56,6 +57,11 @@ router.post('/', async (req, res) => {
 
     const normalizedItems = normalizeItems(items)
     const baseUrl = resolveBaseUrl(req)
+    const account = getRequestUser(req)
+    const checkoutEmail = account?.email || String(email).trim().toLowerCase()
+    const metadata = {}
+    if (analyticsSessionId) metadata.analyticsSessionId = String(analyticsSessionId).slice(0, 100)
+    if (account?.id) metadata.appUserId = account.id
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -72,13 +78,11 @@ router.post('/', async (req, res) => {
       customer_creation: 'always',
       success_url: `${baseUrl}/order/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/cart`,
-      customer_email: email,
+      customer_email: checkoutEmail,
       billing_address_collection: 'required',
       shipping_address_collection: { allowed_countries: ['US'] },
       automatic_tax: { enabled: false },
-      metadata: analyticsSessionId
-        ? { analyticsSessionId: String(analyticsSessionId).slice(0, 100) }
-        : undefined,
+      metadata: Object.keys(metadata).length ? metadata : undefined,
     })
 
     res.json({ url: session.url })

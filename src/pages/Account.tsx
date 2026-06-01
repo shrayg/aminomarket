@@ -1,13 +1,9 @@
 import { Link } from 'react-router-dom'
+import { AccountShell } from '@/components/AccountShell'
 
 export function Account() {
   return (
-    <div className="mx-auto max-w-2xl px-4 py-16">
-      <h1 className="font-sans text-2xl font-bold text-ink-900">
-        My Account
-      </h1>
-      <p className="mt-2 text-ink-600">Manage your account and orders</p>
-
+    <AccountShell title="My Account" subtitle="Manage your account and orders">
       <div className="mt-12 space-y-4">
         {[
           { to: '/account/orders', title: 'Order History', desc: 'View and track orders' },
@@ -24,6 +20,6 @@ export function Account() {
           </Link>
         ))}
       </div>
-    </div>
+    </AccountShell>
   )
 }

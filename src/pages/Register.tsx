@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Logo } from '@/components/Logo'
 import { api } from '@/lib/api'
+import { saveSession } from '@/lib/auth'
 
 export function Register() {
   const [email, setEmail] = useState('')
@@ -16,8 +17,9 @@ export function Register() {
     setLoading(true)
     setError('')
     try {
-      await api.auth.register(email, password, name || undefined)
-      navigate('/login')
+      const { token, user } = await api.auth.register(email, password, name || undefined)
+      saveSession(token, user)
+      navigate('/account')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed')
     } finally {

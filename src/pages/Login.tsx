@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Logo } from '@/components/Logo'
 import { api } from '@/lib/api'
+import { saveSession } from '@/lib/auth'
 
 export function Login() {
   const [email, setEmail] = useState('')
@@ -9,6 +10,7 @@ export function Login() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const navigate = useNavigate()
+  const location = useLocation()
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -16,9 +18,9 @@ export function Login() {
     setError('')
     try {
       const { token, user } = await api.auth.login(email, password)
-      localStorage.setItem('token', token)
-      localStorage.setItem('user', JSON.stringify(user))
-      navigate('/account')
+      saveSession(token, user)
+      const destination = (location.state as { from?: string } | null)?.from || '/account'
+      navigate(destination, { replace: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed')
     } finally {

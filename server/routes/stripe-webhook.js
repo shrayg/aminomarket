@@ -1,5 +1,6 @@
 import Stripe from 'stripe'
 import { markAnalyticsConversion } from '../services/analytics-store.js'
+import { recordPaidOrder } from '../services/order-store.js'
 import {
   notifyFailedPayment,
   notifyPaidCheckout,
@@ -37,6 +38,7 @@ export async function stripeWebhook(req, res) {
         })
         await markAnalyticsConversion(session.metadata?.analyticsSessionId)
         if (session.payment_status === 'paid') {
+          await recordPaidOrder(session)
           await notifyPaidCheckout(session, event.type)
           await notifyReadyForFulfillment(session)
         }

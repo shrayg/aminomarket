@@ -1,33 +1,25 @@
 import { Router } from 'express'
-import { getSupabase, throwIfSupabaseError } from '../lib/supabase.js'
+import { requireUser } from '../middleware/user-auth.js'
+import { listOrdersForUser, trackOrder } from '../services/order-store.js'
 
 const router = Router()
 
-router.get('/:id', async (req, res) => {
+router.get('/mine', requireUser, async (req, res) => {
   try {
-    const { data: order, error } = await getSupabase()
-      .from('orders')
-      .select('id, user_id, email, total, status, created_at, items:order_items(id, order_id, product_id, quantity, price)')
-      .eq('id', req.params.id)
-      .maybeSingle()
-    throwIfSupabaseError(error)
+    res.json(await listOrdersForUser(req.user))
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
 
+router.get('/track', async (req, res) => {
+  try {
+    if (!req.query.orderId || !req.query.email) {
+      return res.status(400).json({ error: 'Order number and email are required.' })
+    }
+    const order = await trackOrder(req.query.orderId, req.query.email)
     if (!order) return res.status(404).json({ error: 'Order not found' })
-    res.json({
-      id: order.id,
-      userId: order.user_id,
-      email: order.email,
-      total: order.total,
-      status: order.status,
-      createdAt: order.created_at,
-      items: (order.items || []).map((item) => ({
-        id: item.id,
-        orderId: item.order_id,
-        productId: item.product_id,
-        quantity: item.quantity,
-        price: item.price,
-      })),
-    })
+    res.json(order)
   } catch (err) {
     res.status(500).json({ error: err.message })
   }

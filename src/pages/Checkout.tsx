@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Logo } from '@/components/Logo'
 import { useCartStore } from '@/store/cart'
 import { getAnalyticsSessionId, trackEvent } from '@/lib/analytics'
+import { api } from '@/lib/api'
+import { getStoredUser, getToken } from '@/lib/auth'
 
 export function Checkout() {
   const { items, getTotal } = useCartStore()
@@ -28,6 +30,33 @@ export function Checkout() {
     }
   }, [getTotal, items])
 
+  useEffect(() => {
+    const user = getStoredUser()
+    if (!user) return
+
+    setForm((current) => ({
+      ...current,
+      email: current.email || user.email,
+      name: current.name || user.name || '',
+    }))
+
+    if (!getToken()) return
+    api.account.addresses.list()
+      .then((addresses) => {
+        const address = addresses.find((item) => item.isDefault) || addresses[0]
+        if (!address) return
+        setForm((current) => ({
+          ...current,
+          name: current.name || address.recipientName,
+          address: current.address || [address.line1, address.line2].filter(Boolean).join(', '),
+          city: current.city || address.city,
+          state: current.state || address.state,
+          zip: current.zip || address.postalCode,
+        }))
+      })
+      .catch(() => {})
+  }, [])
+
   if (items.length === 0 && !loading) {
     return (
       <div className="mx-auto max-w-xl px-4 py-24 text-center">
@@ -44,7 +73,6 @@ export function Checkout() {
     e.preventDefault()
     setLoading(true)
     try {
-      const { api } = await import('@/lib/api')
       const res = await api.checkout({
         items: items.map((i) => ({ id: i.id, quantity: i.quantity })),
         email: form.email,

@@ -9,6 +9,9 @@ import { Checkout } from './pages/Checkout'
 import { Login } from './pages/Login'
 import { Register } from './pages/Register'
 import { Account } from './pages/Account'
+import { AccountAddresses } from './pages/AccountAddresses'
+import { AccountDetails } from './pages/AccountDetails'
+import { AccountOrders } from './pages/AccountOrders'
 import { Contact } from './pages/Contact'
 import { About } from './pages/About'
 import { COA } from './pages/COA'
@@ -38,6 +41,9 @@ function App() {
           <Route path="login" element={<Login />} />
           <Route path="register" element={<Register />} />
           <Route path="account" element={<Account />} />
+          <Route path="account/orders" element={<AccountOrders />} />
+          <Route path="account/addresses" element={<AccountAddresses />} />
+          <Route path="account/edit" element={<AccountDetails />} />
           <Route path="contact" element={<Contact />} />
           <Route path="about" element={<About />} />
           <Route path="coa" element={<COA />} />
