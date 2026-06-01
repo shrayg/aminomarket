@@ -13,6 +13,6 @@
     }
   },
   "crons": [
-    { "path": "/api/admin/code/notify", "schedule": "0 * * * *" }
+    { "path": "/api/admin/code/notify", "schedule": "0 12 * * *" }
   ]
 }
