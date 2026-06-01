@@ -1,0 +1,145 @@
+---
+description: Business positioning, contact details, and policy rules for Amino Market
+alwaysApply: true
+---
+
+# Amino Market business rules
+
+These are owner-set policies. Do not contradict or "soften" them on your own.
+
+## Positioning: Research Use Only
+
+- Amino Market sells research chemicals for **in-vitro laboratory use only**.
+- **Never** describe products as "for medical use", "supplements", "for human
+  consumption", "for treatment of X", "therapeutic", "for weight loss",
+  "anti-aging serum for the body", or anything similar. Stripe will
+  terminate the account on review and the LLC is exposed to FDA enforcement.
+- Always include the disclaimer that products are **not** evaluated by the
+  FDA and **not** intended to diagnose, treat, cure, or prevent any disease.
+- We are NOT a compounding pharmacy (FDCA §503A) and NOT an outsourcing
+  facility (§503B). Make that explicit when writing legal copy.
+- Every customer-facing copy change must preserve the RUO framing.
+- The post-sale disclaimer: we cannot ultimately control what customers do
+  with the product after purchase, but they agreed at checkout to use it
+  only for in-vitro laboratory research. Any deviation is the customer's
+  responsibility, not Percival LLC's.
+
+## Contact info (the only correct values)
+
+| Channel  | Value                                              |
+|----------|----------------------------------------------------|
+| Email    | `aminomarketsupport@gmail.com`                     |
+| Telegram | `@kaimatsu` &mdash; https://t.me/kaimatsu          |
+| Discord  | https://discord.gg/gS7prpfSmy                      |
+
+**Do NOT reintroduce:**
+- The address `11323 Arcade Dr. STE 105, Little Rock, AR 72212`
+- The phone `+1 877 312 1560` (no phone number is listed publicly)
+- The email `aminomarketshop@gmail.com` (note the `shop` vs `support` typo)
+- The "Mon–Fri 9am–5pm GMT-6" support-hours line
+
+The site exposes **no physical address and no phone number**. Support
+response window is "24&ndash;48 hours" everywhere it's mentioned. For
+service of process, customers are routed to email or to the Commonwealth
+of Virginia LLC registration portal — we do not list a mailing address.
+
+## Returns / refunds
+
+- **All sales are final once an order is marked as processed.** The only
+  exceptions are:
+  1. **Pre-processing cancellations** — full refund, no fee, before the
+     order is marked processed.
+  2. **Shipping-damage claims** — see below.
+- After an order is marked processed, no refund is available even if the
+  customer asks us to halt shipment.
+- **Damage claim window: 48 hours after delivery confirmation.** Stricter
+  than the previous 24-48hr range — the policy is "within 48 hours" flat.
+- Claim must include **photos** of outer box + product + the order number,
+  emailed to `aminomarketsupport@gmail.com` (or sent through Telegram /
+  Discord support).
+- On approved damage claim: customer chooses **replacement OR refund**.
+  Either resolution requires the damaged product to be returned using our
+  prepaid label first. Replacement ships (or refund is issued via Stripe)
+  once the carrier scans the return.
+- **Refused / RTS / undeliverable parcels:** no refund. Customer can opt
+  for re-shipment to a corrected address at their expense (invoiced before
+  re-shipping).
+- **Lost parcels:** customer files the claim directly with the carrier
+  (USPS or UPS); we help assemble the paperwork. Resolution depends on
+  the carrier's investigation outcome.
+- We do NOT offer change-of-mind, wrong-item-selected, or "no longer
+  needed" refunds after fulfillment.
+- We do NOT modify orders after submission (no add/remove items).
+- Post-delivery temperature handling is the customer's responsibility.
+
+## Shipping
+
+- Standard turnaround (order to delivery) is **1&ndash;2 weeks**.
+- Carriers used: **USPS** and **UPS**. Service level selected by the
+  shipping calculator based on weight, dimensions, destination, and live
+  carrier rate.
+- Shipping cost is **calculated at checkout in real time** from the
+  carrier's live rate.
+- **Free shipping on US domestic orders of $200 or more.** The free-ship
+  threshold does **not** apply to international orders — international
+  always pays the carrier rate.
+- We **ship internationally** as well as everywhere domestically:
+  - All 50 US states + DC
+  - US territories (Puerto Rico, USVI, Guam, American Samoa)
+  - APO / FPO / DPO military addresses
+  - US Post Office (P.O.) boxes
+  - International destinations (live rate)
+- Customs duties, VAT, GST, and import fees are the customer's
+  responsibility. Customs seizures are not refundable.
+- If a delay pushes outside the 1–2 week window, the customer is emailed.
+- No insurance and no signature required on shipments.
+
+## Legal entity & governing law
+
+- Legal entity: **Percival LLC** (a Virginia limited liability company).
+- Brand / trade name used in marketing copy: **Amino Market**.
+- In legal copy (Terms, Privacy, refund records, copyright line) use
+  `Percival LLC, d/b/a Amino Market` &mdash; in marketing/storefront copy
+  the brand alone ("Amino Market") is fine.
+- Governing law / venue for the Terms of Service: **Commonwealth of
+  Virginia** (any state or federal court located in Virginia).
+- The Terms include a **binding individual arbitration agreement and
+  class-action waiver** (Section 12), AAA Consumer Arbitration Rules,
+  with a 30-day opt-out and small-claims-court / injunctive-IP-relief
+  carve-outs. Do not remove or weaken this unless explicitly instructed.
+- Footer copyright line: `© <year> Percival LLC, d/b/a Amino Market.`
+
+## Sales tax
+
+- We do **not** currently use Stripe Tax or collect sales tax on the
+  storefront. The Terms state that sales/use/VAT/GST/customs duties are
+  the customer's responsibility unless we expressly collect them. Do not
+  add Stripe Tax integration code without explicit owner approval.
+
+## Age gate
+
+- Site is restricted to users **21+ no matter what**.
+- The landing age-and-research-use gate must include small text under the
+  21+ confirmation reading "By continuing you agree to our Privacy
+  Policy" (link to /privacy).
+
+## Marketing communications
+
+- We collect **email and SMS marketing opt-in** at account creation via
+  pre-enabled checkboxes the user can uncheck.
+- Marketing messages cover **discounts, promotional offers, and product
+  launches** only.
+- Users can opt out anytime: account settings, unsubscribe link in
+  email, or reply STOP to SMS.
+- Transactional messages (order status, shipping, support, security)
+  always send regardless of marketing opt-out.
+
+## Promo codes / loyalty / affiliate
+
+- **Promo codes:** Posted publicly on the site, applied at checkout.
+- **Loyalty:** Customers whose lifetime spend crosses $300 automatically
+  earn a 10% discount on all future purchases (applied via Stripe).
+- **Affiliate discount codes:** Give the customer using the code 10%
+  off. Affiliates earn 25% of profit per code, scaling to 40% after 50+
+  orders and $2.5k+ in processed product.
+- Discounts cannot be combined unless we explicitly state otherwise.

@@ -1,0 +1,72 @@
+---
+description: When adding a new sub-processor (SMS/email/analytics tool), update the Privacy Policy
+alwaysApply: true
+---
+
+# Sub-processor disclosure rule
+
+The Privacy Policy at `src/pages/Privacy.tsx` discloses a fixed list of
+sub-processors that handle customer data on our behalf:
+
+- Stripe (payment processing)
+- Vercel (hosting)
+- Supabase (database)
+- USPS and UPS (shipping carriers)
+
+**If you add ANY new third-party service that processes customer personal
+data, you MUST also update the Privacy Policy's "Who we share it with
+(sub-processors)" section in the same change.** This includes (but is
+not limited to):
+
+- SMS marketing providers (Twilio, Postscript, Klaviyo SMS, etc.)
+- Email marketing providers (Klaviyo, Mailchimp, ConvertKit, SendGrid,
+  Postmark, Customer.io, etc.)
+- Transactional email senders (Resend, SES, Postmark, etc.)
+- Analytics tools (Google Analytics, GA4, Plausible, PostHog, Mixpanel,
+  Heap, Amplitude, Hotjar, FullStory, session-replay, etc.)
+- Ad / tracking pixels (Meta, TikTok, Google Ads, Reddit, etc.) — **and
+  if you do add one of these, also remove the line in Privacy that says
+  "we do not set advertising cookies, retargeting pixels, or third-party
+  tracking pixels"**.
+- CRM / helpdesk (Intercom, Zendesk, HubSpot, Crisp, etc.)
+- Reviews / UGC platforms (Yotpo, Okendo, Trustpilot, etc.)
+- Loyalty / rewards platforms (Smile.io, LoyaltyLion, etc.)
+- Affiliate networks (Refersion, Impact, etc.)
+- Sub-processors used by Supabase or Vercel that materially expand
+  data-sharing (e.g. enabling Vercel Analytics, Supabase Edge Functions
+  with third-party APIs).
+
+The rule is one-way: adding a service requires updating Privacy.
+Removing a service should also remove its sub-processor listing.
+
+If a campaign or integration is added without updating Privacy, the
+policy becomes materially false and exposes Percival LLC to consumer-
+protection claims. Do not skip this step.
+
+## How to add a sub-processor entry
+
+Edit the `<ul>` inside the "Who we share it with (sub-processors)"
+section in `src/pages/Privacy.tsx`. Each entry follows the pattern:
+
+```tsx
+<li>
+  <strong>Provider Name</strong> &mdash; one-line description of what
+  the provider does and what data it receives.
+</li>
+```
+
+Keep the descriptions concise and accurate. Don't add a provider
+unless it is actually wired up in production.
+
+## Marketing-tool specific
+
+When wiring up an email or SMS marketing tool:
+
+1. Add the provider to the sub-processor list as above.
+2. Make sure the account-creation marketing-opt-in checkboxes (per
+   Privacy "Marketing communications" section) actually persist to and
+   sync with the new provider.
+3. Implement the unsubscribe / STOP-reply flow before launching the
+   first campaign.
+4. Document the provider and the data fields synced in
+   `business-policies.mdc` under "Marketing communications".

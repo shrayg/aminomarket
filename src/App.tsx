@@ -24,6 +24,7 @@ import { Privacy } from './pages/Privacy'
 import { Returns } from './pages/Returns'
 import { Shipping } from './pages/Shipping'
 import { Terms } from './pages/Terms'
+import { FAQ } from './pages/FAQ'
 import { Admin } from './pages/Admin'
 import { AnalyticsTracker } from './components/AnalyticsTracker'
 
@@ -56,6 +57,7 @@ function App() {
           <Route path="returns" element={<Returns />} />
           <Route path="shipping" element={<Shipping />} />
           <Route path="terms" element={<Terms />} />
+          <Route path="faq" element={<FAQ />} />
         </Route>
         <Route path="/admin" element={<Admin />} />
       </Routes>

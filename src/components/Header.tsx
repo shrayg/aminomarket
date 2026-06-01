@@ -33,15 +33,14 @@ export function Header() {
       <div className="bg-ink-950 px-4 py-3">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-4 gap-y-2 text-center text-sm leading-normal text-white/95">
           <Logo variant="dark" height="sm" />
-          <span>Valentine&apos;s Week: 20% Off Peptides + BOGO Cosmetics (02/09–02/15)</span>
+          <span>Launch Week: 20% Off</span>
           <span className="hidden sm:inline">·</span>
-          <span>Important Update — Tap to View</span>
-          <span className="hidden sm:inline">•</span>
-          <span>Free shipping on orders $200+</span>
           <Link to="/track-order" className="underline decoration-white/60 underline-offset-2 hover:decoration-white">
             Track Order
           </Link>
-          <span>Support</span>
+          <Link to="/contact" className="underline decoration-white/60 underline-offset-2 hover:decoration-white">
+            Support
+          </Link>
         </div>
       </div>
 

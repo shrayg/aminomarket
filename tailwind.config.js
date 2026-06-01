@@ -34,6 +34,30 @@ export default {
       letterSpacing: {
         'tight-ultra': '-0.04em',
       },
+      keyframes: {
+        'hero-slide-in-right': {
+          '0%': { opacity: '0', transform: 'translateX(56px)' },
+          '100%': { opacity: '1', transform: 'translateX(0)' },
+        },
+        'hero-slide-in-left': {
+          '0%': { opacity: '0', transform: 'translateX(-56px)' },
+          '100%': { opacity: '1', transform: 'translateX(0)' },
+        },
+        'hero-slide-out-left': {
+          '0%': { opacity: '1', transform: 'translateX(0)' },
+          '100%': { opacity: '0', transform: 'translateX(-56px)' },
+        },
+        'hero-slide-out-right': {
+          '0%': { opacity: '1', transform: 'translateX(0)' },
+          '100%': { opacity: '0', transform: 'translateX(56px)' },
+        },
+      },
+      animation: {
+        'hero-slide-in-right': 'hero-slide-in-right 900ms cubic-bezier(0.22, 1, 0.36, 1) both',
+        'hero-slide-in-left': 'hero-slide-in-left 900ms cubic-bezier(0.22, 1, 0.36, 1) both',
+        'hero-slide-out-left': 'hero-slide-out-left 900ms cubic-bezier(0.22, 1, 0.36, 1) both',
+        'hero-slide-out-right': 'hero-slide-out-right 900ms cubic-bezier(0.22, 1, 0.36, 1) both',
+      },
     },
   },
   plugins: [],
