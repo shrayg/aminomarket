@@ -1,4 +1,5 @@
 import { getSupabase, isSupabaseConfigured, throwIfSupabaseError } from '../lib/supabase.js'
+import { getCheckoutItemByName } from '../catalog.js'
 
 const COLORS = {
   signup: 0x2563eb,
@@ -57,10 +58,11 @@ function timestamp(value = Date.now()) {
   return new Date(milliseconds).toISOString()
 }
 
-function embed(title, description, color, fields) {
+function embed(title, description, color, fields, options = {}) {
   return {
     username: 'Aminomarket Operations',
-    allowed_mentions: { parse: [] },
+    content: options.content,
+    allowed_mentions: { parse: options.pingEveryone ? ['everyone'] : [] },
     embeds: [{
       title,
       description,
@@ -70,6 +72,33 @@ function embed(title, description, color, fields) {
       timestamp: new Date().toISOString(),
     }],
   }
+}
+
+function estimatedGrossProfitCents(session) {
+  const items = session.line_items?.data || []
+  if (!items.length) return null
+
+  let estimatedProductCostCents = 0
+  for (const item of items) {
+    const product = typeof item.price?.product === 'object' ? item.price.product : null
+    const metadataCost = Number(product?.metadata?.estimatedUnitCostCents)
+    const catalogCost = getCheckoutItemByName(item.description)?.estimatedUnitCostCents
+    const unitCostCents = Number.isFinite(metadataCost) && metadataCost >= 0
+      ? metadataCost
+      : catalogCost
+    if (!Number.isFinite(unitCostCents)) return null
+    estimatedProductCostCents += unitCostCents * (item.quantity || 1)
+  }
+
+  return Number(session.amount_total || 0) - estimatedProductCostCents
+}
+
+function paymentHeadline(session) {
+  const profitCents = estimatedGrossProfitCents(session)
+  const profit = profitCents === null
+    ? 'EST. GROSS PROFIT UNAVAILABLE'
+    : `${money(profitCents, session.currency)} EST. GROSS PROFIT`
+  return `# **${money(session.amount_total, session.currency)} PAID**\n# **${profit}**`
 }
 
 async function accountForEmail(email) {
@@ -173,7 +202,8 @@ export async function buildPaidPaymentPayload(session, eventType) {
       field('Payment Intent', objectId(session.payment_intent), true),
       field('Stripe Event', eventType, true),
       field('Created', timestamp(session.created)),
-    ]
+    ],
+    { content: paymentHeadline(session) }
   )
 }
 
@@ -196,7 +226,8 @@ export async function buildFulfillmentPayload(session) {
       field('Stripe Customer', objectId(session.customer), true),
       field('Payment Intent', objectId(session.payment_intent), true),
       field('Paid At', timestamp()),
-    ]
+    ],
+    { content: '@everyone', pingEveryone: true }
   )
 }
 

@@ -34,7 +34,7 @@ export async function stripeWebhook(req, res) {
       case 'checkout.session.completed':
       case 'checkout.session.async_payment_succeeded': {
         const session = await stripe.checkout.sessions.retrieve(event.data.object.id, {
-          expand: ['customer', 'line_items', 'payment_intent'],
+          expand: ['customer', 'line_items.data.price.product', 'payment_intent'],
         })
         await markAnalyticsConversion(session.metadata?.analyticsSessionId)
         if (session.payment_status === 'paid') {
@@ -47,7 +47,7 @@ export async function stripeWebhook(req, res) {
       }
       case 'checkout.session.async_payment_failed': {
         const session = await stripe.checkout.sessions.retrieve(event.data.object.id, {
-          expand: ['customer', 'line_items', 'payment_intent'],
+          expand: ['customer', 'line_items.data.price.product', 'payment_intent'],
         })
         await notifyFailedPayment(session, event.type)
         console.log(`[stripe] ${event.type} -> session=${session.id}`)

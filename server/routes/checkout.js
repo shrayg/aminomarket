@@ -68,7 +68,13 @@ router.post('/', async (req, res) => {
       line_items: normalizedItems.map((item) => ({
         price_data: {
           currency: 'usd',
-          product_data: { name: item.name },
+          product_data: {
+            name: item.name,
+            metadata: {
+              catalogItemId: item.id,
+              estimatedUnitCostCents: String(item.estimatedUnitCostCents),
+            },
+          },
           unit_amount: Math.round(item.price * 100),
         },
         quantity: item.quantity,
