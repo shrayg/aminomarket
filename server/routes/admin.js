@@ -94,7 +94,22 @@ function normalizeOrder(session, fulfillmentById) {
   }
 }
 
-function buildAnalyticsSummary({ sessions, events, storageMode }, days) {
+// Allowed thresholds for what counts as an "engaged" visit (operator-tunable
+// from the dashboard). Kept tight so we can never blow up the daily-bucket
+// engagedVisits counter with arbitrary values.
+const ENGAGED_THRESHOLD_OPTIONS = [5, 15, 60]
+const DEFAULT_ENGAGED_THRESHOLD_SECONDS = 5
+
+function normalizeEngagedThreshold(value) {
+  const numeric = Number(value)
+  if (!Number.isFinite(numeric)) return DEFAULT_ENGAGED_THRESHOLD_SECONDS
+  return ENGAGED_THRESHOLD_OPTIONS.includes(numeric)
+    ? numeric
+    : DEFAULT_ENGAGED_THRESHOLD_SECONDS
+}
+
+function buildAnalyticsSummary({ sessions, events, storageMode }, days, engagedThresholdSeconds) {
+  const threshold = normalizeEngagedThreshold(engagedThresholdSeconds)
   const daily = new Map()
   const paths = new Map()
   const traffic = new Map()
@@ -116,9 +131,10 @@ function buildAnalyticsSummary({ sessions, events, storageMode }, days) {
   for (const session of sessions) {
     const date = dayKey(session.startedAt)
     const bucket = daily.get(date)
+    const isEngaged = (session.durationSeconds || 0) >= threshold
     if (bucket) {
       bucket.visits += 1
-      if (session.engaged) bucket.engagedVisits += 1
+      if (isEngaged) bucket.engagedVisits += 1
     }
     increment(traffic, session.source || 'direct')
   }
@@ -157,7 +173,9 @@ function buildAnalyticsSummary({ sessions, events, storageMode }, days) {
     }
   }
 
-  const engagedSessions = sessions.filter((session) => session.engaged)
+  const engagedSessions = sessions.filter(
+    (session) => (session.durationSeconds || 0) >= threshold
+  )
   const checkoutSessions = sessions.filter((session) => session.checkoutStarted)
   const convertedSessions = sessions.filter((session) => session.converted)
   const averageEngagedSeconds = engagedSessions.length
@@ -169,6 +187,7 @@ function buildAnalyticsSummary({ sessions, events, storageMode }, days) {
 
   return {
     storageMode,
+    engagedThresholdSeconds: threshold,
     metrics: {
       visits: sessions.length,
       pageViews: eventCounts.get('page_view') || 0,
@@ -311,6 +330,7 @@ router.post('/login', (req, res) => {
 
 router.get('/dashboard', requireAdmin, async (req, res) => {
   const days = Math.min(90, Math.max(7, Number(req.query.days) || 30))
+  const engagedThresholdSeconds = normalizeEngagedThreshold(req.query.engagedThreshold)
   const [analytics, fulfillments, registeredUsers] = await Promise.all([
     listAnalytics(days),
     listFulfillments(),
@@ -324,7 +344,8 @@ router.get('/dashboard', requireAdmin, async (req, res) => {
   res.json({
     generatedAt: new Date().toISOString(),
     days,
-    analytics: buildAnalyticsSummary(analytics, days),
+    engagedThresholdSeconds,
+    analytics: buildAnalyticsSummary(analytics, days, engagedThresholdSeconds),
     stripe: stripeData,
     registeredUsers,
   })

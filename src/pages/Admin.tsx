@@ -186,22 +186,77 @@ function MetricCard({
   value,
   note,
   icon: Icon,
+  control,
 }: {
   label: string
   value: string
   note: string
   icon: typeof Activity
+  control?: React.ReactNode
 }) {
   return (
     <div className="border border-ink-200 bg-white p-5">
       <div className="flex items-start justify-between gap-3">
-        <div>
+        <div className="min-w-0 flex-1">
           <p className="text-xs font-bold uppercase tracking-wider text-ink-400">{label}</p>
           <p className="mt-3 text-2xl font-bold text-ink-900">{value}</p>
           <p className="mt-2 text-xs leading-relaxed text-ink-500">{note}</p>
+          {control && <div className="mt-3">{control}</div>}
         </div>
         <Icon className="h-5 w-5 text-accent-dark" />
       </div>
+    </div>
+  )
+}
+
+const ENGAGED_THRESHOLDS = [5, 15, 60] as const
+type EngagedThreshold = (typeof ENGAGED_THRESHOLDS)[number]
+
+function formatEngagedThreshold(seconds: number) {
+  if (seconds >= 60) {
+    const minutes = Math.round(seconds / 60)
+    return minutes === 1 ? '1 minute' : `${minutes} minutes`
+  }
+  return `${seconds} seconds`
+}
+
+function shortEngagedThreshold(seconds: number) {
+  if (seconds >= 60) {
+    const minutes = Math.round(seconds / 60)
+    return minutes === 1 ? '1m' : `${minutes}m`
+  }
+  return `${seconds}s`
+}
+
+function EngagedThresholdToggle({
+  value,
+  onChange,
+}: {
+  value: EngagedThreshold
+  onChange: (next: EngagedThreshold) => void
+}) {
+  return (
+    <div
+      role="group"
+      aria-label="Engaged-visit threshold"
+      className="inline-flex border border-ink-200 bg-ink-50 p-0.5"
+    >
+      {ENGAGED_THRESHOLDS.map((option) => {
+        const active = option === value
+        return (
+          <button
+            key={option}
+            type="button"
+            onClick={() => onChange(option)}
+            aria-pressed={active}
+            className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider transition ${
+              active ? 'bg-ink-900 text-white' : 'text-ink-600 hover:text-ink-900'
+            }`}
+          >
+            {shortEngagedThreshold(option)}
+          </button>
+        )
+      })}
     </div>
   )
 }
@@ -1174,6 +1229,7 @@ export function Admin() {
   const [dashboard, setDashboard] = useState<Dashboard | null>(null)
   const [activeTab, setActiveTab] = useState<Tab>('overview')
   const [days, setDays] = useState(30)
+  const [engagedThreshold, setEngagedThreshold] = useState<EngagedThreshold>(5)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
@@ -1228,7 +1284,10 @@ export function Admin() {
     setLoading(true)
     setError('')
     try {
-      const response = await adminFetch(token, `/api/admin/dashboard?days=${days}`)
+      const response = await adminFetch(
+        token,
+        `/api/admin/dashboard?days=${days}&engagedThreshold=${engagedThreshold}`
+      )
       const data = await response.json()
       if (!response.ok) throw new Error(data.error || 'Could not load dashboard.')
       setDashboard(data)
@@ -1238,7 +1297,7 @@ export function Admin() {
     } finally {
       setLoading(false)
     }
-  }, [days, token])
+  }, [days, engagedThreshold, token])
 
   useEffect(() => {
     void loadDashboard()
@@ -1390,7 +1449,18 @@ export function Admin() {
               <div className="mt-6 space-y-6">
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                   <MetricCard label="Visits" value={compactNumber(analytics.metrics.visits)} note={`${analytics.metrics.pageViews} total page views`} icon={Eye} />
-                  <MetricCard label="Engaged visits" value={`${engagedRate.toFixed(1)}%`} note={`${analytics.metrics.engagedVisits} visits lasting more than 5 seconds`} icon={Clock3} />
+                  <MetricCard
+                    label="Engaged visits"
+                    value={`${engagedRate.toFixed(1)}%`}
+                    note={`${analytics.metrics.engagedVisits} visits lasting more than ${formatEngagedThreshold(engagedThreshold)}`}
+                    icon={Clock3}
+                    control={
+                      <EngagedThresholdToggle
+                        value={engagedThreshold}
+                        onChange={setEngagedThreshold}
+                      />
+                    }
+                  />
                   <MetricCard label="Paid revenue" value={money(stripe.metrics.revenue)} note={`${stripe.metrics.paidOrders} paid Stripe Checkout sessions`} icon={CreditCard} />
                   <MetricCard label="Checkout conversion" value={`${checkoutConversion.toFixed(1)}%`} note={`${analytics.metrics.checkoutStarts} tracked checkout starts`} icon={ShoppingCart} />
                 </div>
@@ -1421,7 +1491,18 @@ export function Admin() {
             {activeTab === 'behavior' && analytics && (
               <div className="mt-6 space-y-6">
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                  <MetricCard label="Average engaged time" value={duration(analytics.metrics.averageEngagedSeconds)} note="Average duration for sessions over 5 seconds" icon={Clock3} />
+                  <MetricCard
+                    label="Average engaged time"
+                    value={duration(analytics.metrics.averageEngagedSeconds)}
+                    note={`Average duration for sessions over ${formatEngagedThreshold(engagedThreshold)}`}
+                    icon={Clock3}
+                    control={
+                      <EngagedThresholdToggle
+                        value={engagedThreshold}
+                        onChange={setEngagedThreshold}
+                      />
+                    }
+                  />
                   <MetricCard label="Product views" value={compactNumber(analytics.metrics.productViews)} note="Dedicated product-page visits" icon={Eye} />
                   <MetricCard label="Add to carts" value={compactNumber(analytics.metrics.addToCarts)} note="Add-to-cart interactions" icon={ShoppingCart} />
                   <MetricCard label="Checkout starts" value={compactNumber(analytics.metrics.checkoutStarts)} note="Visits reaching checkout" icon={PackageCheck} />
