@@ -5,6 +5,7 @@ import authRouter from './routes/auth.js'
 import newsletterRouter from './routes/newsletter.js'
 import contactRouter from './routes/contact.js'
 import checkoutRouter from './routes/checkout.js'
+import checkoutQuoteRouter from './routes/checkout-quote.js'
 import ordersRouter from './routes/orders.js'
 import analyticsRouter from './routes/analytics.js'
 import adminRouter from './routes/admin.js'
@@ -38,6 +39,7 @@ app.use('/api/products', productsRouter)
 app.use('/api/auth', authRouter)
 app.use('/api/newsletter', newsletterRouter)
 app.use('/api/contact', contactRouter)
+app.use('/api/checkout/quote', checkoutQuoteRouter)
 app.use('/api/checkout', checkoutRouter)
 app.use('/api/orders', ordersRouter)
 app.use('/api/analytics', analyticsRouter)

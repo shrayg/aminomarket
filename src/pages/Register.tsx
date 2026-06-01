@@ -7,17 +7,30 @@ import { saveSession } from '@/lib/auth'
 export function Register() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [name, setName] = useState('')
+  const [marketingEmail, setMarketingEmail] = useState(true)
+  const [marketingSms, setMarketingSms] = useState(true)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const navigate = useNavigate()
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.')
+      return
+    }
     setLoading(true)
     setError('')
     try {
-      const { token, user } = await api.auth.register(email, password, name || undefined)
+      const { token, user } = await api.auth.register({
+        email,
+        password,
+        name: name || undefined,
+        marketingEmailOptIn: marketingEmail,
+        marketingSmsOptIn: marketingSms,
+      })
       saveSession(token, user)
       navigate('/account')
     } catch (err) {
@@ -37,7 +50,7 @@ export function Register() {
 
       <form onSubmit={handleSubmit} className="mt-10 space-y-6">
         <div>
-          <label className="block text-sm font-medium text-ink-700">Name</label>
+          <label className="block text-sm font-medium text-ink-700">Username</label>
           <input
             type="text"
             value={name}
@@ -65,6 +78,37 @@ export function Register() {
             onChange={(e) => setPassword(e.target.value)}
             className="mt-2 w-full rounded-xl border border-ink-200 px-4 py-3 focus:border-ink-900 focus:outline-none focus:ring-2 focus:ring-ink-900/20"
           />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-ink-700">Confirm password</label>
+          <input
+            type="password"
+            required
+            minLength={6}
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            className="mt-2 w-full rounded-xl border border-ink-200 px-4 py-3 focus:border-ink-900 focus:outline-none focus:ring-2 focus:ring-ink-900/20"
+          />
+        </div>
+        <div className="space-y-3 rounded-xl bg-ink-50 p-4">
+          <label className="flex items-start gap-3 text-sm text-ink-700">
+            <input
+              type="checkbox"
+              checked={marketingEmail}
+              onChange={(e) => setMarketingEmail(e.target.checked)}
+              className="mt-1 rounded border-ink-300"
+            />
+            <span>Email me about discounts, promotions, and product launches.</span>
+          </label>
+          <label className="flex items-start gap-3 text-sm text-ink-700">
+            <input
+              type="checkbox"
+              checked={marketingSms}
+              onChange={(e) => setMarketingSms(e.target.checked)}
+              className="mt-1 rounded border-ink-300"
+            />
+            <span>Text me about discounts and promotions (SMS, reply STOP to opt out).</span>
+          </label>
         </div>
         {error && <p className="text-sm text-red-600">{error}</p>}
         <button

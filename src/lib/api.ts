@@ -15,6 +15,55 @@ export type CustomerAddress = {
   isDefault: boolean
 }
 
+export type ShippingRateOption = {
+  serviceKey: string
+  carrier: 'USPS' | 'UPS'
+  service: string
+  displayName: string
+  amountCents: number
+  estimatedDays: string
+}
+
+export type ShippingQuoteRequestAddress = {
+  line1?: string
+  line2?: string
+  city: string
+  state?: string
+  zip?: string
+  country: string
+  isPoBox?: boolean
+}
+
+export type ShippingQuoteResponse = {
+  rates: ShippingRateOption[]
+  parcelWeightGrams: number
+  zoneId: string
+  subtotalCents: number
+}
+
+export type CheckoutShippingPayload = {
+  recipientName: string
+  line1: string
+  line2?: string
+  city: string
+  state: string
+  zip: string
+  country: string
+  isPoBox?: boolean
+}
+
+export type CheckoutSelectedRate = {
+  carrier: string
+  service: string
+  displayName: string
+  amountCents: number
+}
+
+export type CheckoutMarketingOptIn = {
+  email: boolean
+  sms: boolean
+}
+
 export type CustomerOrder = {
   id: string
   createdAt: string
@@ -52,10 +101,17 @@ export const api = {
         method: 'POST',
         body: JSON.stringify({ email, password }),
       }),
-    register: (email: string, password: string, name?: string) =>
+    register: (data: {
+      email: string
+      password: string
+      name?: string
+      marketingEmailOptIn?: boolean
+      marketingSmsOptIn?: boolean
+      phone?: string
+    }) =>
       fetchApi('/auth/register', {
         method: 'POST',
-        body: JSON.stringify({ email, password, name }),
+        body: JSON.stringify(data),
       }),
     me: () => fetchApi('/auth/me', { headers: authHeaders() }),
     requestPasswordReset: (email: string) =>
@@ -111,8 +167,25 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(data),
     }),
-  checkout: (data: { items: { id: string; quantity: number }[]; email: string; shipping?: object; analyticsSessionId?: string }) =>
+  checkout: (data: {
+    items: { id: string; quantity: number }[]
+    email: string
+    shipping: CheckoutShippingPayload
+    selectedRate: CheckoutSelectedRate
+    ruoAcknowledged: boolean
+    marketingOptIn?: CheckoutMarketingOptIn
+    analyticsSessionId?: string
+  }) =>
     fetchApi('/checkout', {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify(data),
+    }),
+  quoteShipping: (data: {
+    items: { id: string; quantity: number; weightGrams?: number }[]
+    address: ShippingQuoteRequestAddress
+  }): Promise<ShippingQuoteResponse> =>
+    fetchApi('/checkout/quote', {
       method: 'POST',
       headers: authHeaders(),
       body: JSON.stringify(data),

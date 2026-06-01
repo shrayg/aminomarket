@@ -62,7 +62,7 @@ async function clearDefaultAddress(db, userId, exceptId = null) {
 
 router.post('/register', async (req, res) => {
   try {
-    const { email, password, name } = req.body
+    const { email, password, name, marketingEmailOptIn, marketingSmsOptIn, phone } = req.body
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password required' })
     }
@@ -81,14 +81,18 @@ router.post('/register', async (req, res) => {
     }
 
     const hash = await bcrypt.hash(String(password), 10)
+    const insertRow = {
+      email: normalizedEmailValue,
+      name: clean(name) || null,
+      password_hash: hash,
+      marketing_email_opt_in: marketingEmailOptIn !== false,
+      marketing_sms_opt_in: marketingSmsOptIn !== false,
+      phone: clean(phone, 40) || null,
+    }
     const { data: user, error: createError } = await db
       .from('app_users')
-      .insert({
-        email: normalizedEmailValue,
-        name: clean(name) || null,
-        password_hash: hash,
-      })
-      .select('id, email, name')
+      .insert(insertRow)
+      .select('id, email, name, marketing_email_opt_in, marketing_sms_opt_in')
       .single()
     throwIfSupabaseError(createError)
     try {
@@ -100,7 +104,13 @@ router.post('/register', async (req, res) => {
     const token = createUserToken(user)
     res.json({
       token,
-      user: { id: user.id, email: user.email, name: user.name },
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        marketingEmailOptIn: user.marketing_email_opt_in,
+        marketingSmsOptIn: user.marketing_sms_opt_in,
+      },
     })
   } catch (err) {
     if (err.code === '23505') {
@@ -120,7 +130,7 @@ router.post('/login', async (req, res) => {
     const db = getSupabase()
     const { data: user, error } = await db
       .from('app_users')
-      .select('id, email, name, password_hash')
+      .select('id, email, name, password_hash, marketing_email_opt_in, marketing_sms_opt_in')
       .eq('email', normalizedEmail(email))
       .maybeSingle()
     throwIfSupabaseError(error)
@@ -135,7 +145,13 @@ router.post('/login', async (req, res) => {
     const token = createUserToken(user)
     res.json({
       token,
-      user: { id: user.id, email: user.email, name: user.name },
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        marketingEmailOptIn: user.marketing_email_opt_in,
+        marketingSmsOptIn: user.marketing_sms_opt_in,
+      },
     })
   } catch (err) {
     res.status(500).json({ error: err.message })
@@ -146,11 +162,18 @@ router.get('/me', requireUser, async (req, res) => {
   try {
     const { data: user, error } = await getSupabase()
       .from('app_users')
-      .select('id, email, name, created_at')
+      .select('id, email, name, created_at, marketing_email_opt_in, marketing_sms_opt_in')
       .eq('id', req.user.id)
       .single()
     throwIfSupabaseError(error)
-    res.json({ id: user.id, email: user.email, name: user.name, createdAt: user.created_at })
+    res.json({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      createdAt: user.created_at,
+      marketingEmailOptIn: user.marketing_email_opt_in,
+      marketingSmsOptIn: user.marketing_sms_opt_in,
+    })
   } catch (err) {
     res.status(500).json({ error: err.message })
   }

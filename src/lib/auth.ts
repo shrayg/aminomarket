@@ -2,6 +2,8 @@ export type Customer = {
   id: string
   email: string
   name?: string | null
+  marketingEmailOptIn?: boolean
+  marketingSmsOptIn?: boolean
 }
 
 export function getToken() {
