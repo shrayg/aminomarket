@@ -1556,8 +1556,8 @@ function AdminLogin({ onLogin }: { onLogin: (password: string) => Promise<void> 
         </p>
         <h1 className="mt-2 text-2xl font-bold text-ink-900">Admin dashboard</h1>
         <p className="mt-2 text-sm leading-relaxed text-ink-500">
-          Sign in with the current hourly access code from the Discord ops channel. The code rotates
-          every hour and your session ends the moment it expires.
+          Sign in with the current hourly access code. The code rotates every hour and your
+          session ends the moment it expires.
         </p>
         <label className="mt-6 block">
           <span className="text-xs font-bold uppercase tracking-wider text-ink-500">
@@ -1570,7 +1570,7 @@ function AdminLogin({ onLogin }: { onLogin: (password: string) => Promise<void> 
             autoFocus
             autoComplete="off"
             spellCheck={false}
-            placeholder="12-character code from Discord"
+            placeholder="12-character access code"
             className="mt-2 w-full border border-ink-200 px-3 py-3 font-mono text-sm tracking-[0.2em] outline-none transition focus:border-ink-600"
           />
         </label>
@@ -1613,7 +1613,7 @@ export function Admin() {
   useEffect(() => {
     function onForce() {
       logout()
-      setError('Your session ended because the hourly access code rotated. Sign in with the new Discord code.')
+      setError('Your session ended because the hourly access code rotated. Sign in with the new code.')
     }
     window.addEventListener(ADMIN_LOGOUT_EVENT, onForce)
     return () => window.removeEventListener(ADMIN_LOGOUT_EVENT, onForce)
@@ -1628,7 +1628,7 @@ export function Admin() {
     if (!expMs) return
     const fire = () => {
       logout()
-      setError('Your session expired. Sign in with the latest hourly Discord code.')
+      setError('Your session expired. Sign in with the latest hourly access code.')
     }
     const msLeft = expMs - Date.now()
     if (msLeft <= 0) {

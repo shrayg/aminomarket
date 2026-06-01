@@ -43,7 +43,7 @@ export function createAdminToken(submittedCode, ip = 'unknown') {
   const submitted = String(submittedCode || '').trim()
   if (!submitted || !safeEqual(submitted, codeInfo.code)) {
     record.count += 1
-    const error = new Error('Invalid access code. Check the latest hourly code in Discord.')
+    const error = new Error('Invalid access code.')
     error.statusCode = 401
     throw error
   }
