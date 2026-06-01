@@ -12,6 +12,7 @@ type Props = {
 
 export function CheckoutAuthPanel({ onAuth, defaultMode = 'signin' }: Props) {
   const [mode, setMode] = useState<Mode>(defaultMode)
+  const [identifier, setIdentifier] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -26,7 +27,7 @@ export function CheckoutAuthPanel({ onAuth, defaultMode = 'signin' }: Props) {
     setLoading(true)
     setError('')
     try {
-      const { token, user } = await api.auth.login(email, password)
+      const { token, user } = await api.auth.login(identifier.trim(), password)
       saveSession(token, user)
       onAuth(user)
     } catch (err) {
@@ -75,18 +76,18 @@ export function CheckoutAuthPanel({ onAuth, defaultMode = 'signin' }: Props) {
         damage-claim records, and shipping notifications tied to a single inbox.
       </p>
 
-      <div className="mt-5 inline-flex rounded-xl border border-ink-200 p-1 text-sm font-medium">
+      <div className="mt-5 inline-flex border border-ink-200 p-1 text-sm font-medium">
         <button
           type="button"
           onClick={() => { setMode('signin'); setError('') }}
-          className={`rounded-lg px-4 py-2 transition ${mode === 'signin' ? 'bg-ink-900 text-white' : 'text-ink-600 hover:text-ink-900'}`}
+          className={`px-4 py-2 transition ${mode === 'signin' ? 'bg-ink-900 text-white' : 'text-ink-600 hover:text-ink-900'}`}
         >
           Sign in
         </button>
         <button
           type="button"
           onClick={() => { setMode('signup'); setError('') }}
-          className={`rounded-lg px-4 py-2 transition ${mode === 'signup' ? 'bg-ink-900 text-white' : 'text-ink-600 hover:text-ink-900'}`}
+          className={`px-4 py-2 transition ${mode === 'signup' ? 'bg-ink-900 text-white' : 'text-ink-600 hover:text-ink-900'}`}
         >
           Create account
         </button>
@@ -95,13 +96,13 @@ export function CheckoutAuthPanel({ onAuth, defaultMode = 'signin' }: Props) {
       {mode === 'signin' ? (
         <form onSubmit={handleSignIn} className="mt-6 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-ink-700">Email</label>
+            <label className="block text-sm font-medium text-ink-700">Email or username</label>
             <input
-              type="email"
+              type="text"
               required
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="username"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
               className="mt-2 w-full rounded-xl border border-ink-200 px-4 py-3 focus:border-ink-900 focus:outline-none focus:ring-2 focus:ring-ink-900/20"
             />
           </div>
@@ -126,7 +127,7 @@ export function CheckoutAuthPanel({ onAuth, defaultMode = 'signin' }: Props) {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-xl bg-ink-900 py-3 font-semibold text-white transition hover:bg-ink-800 disabled:opacity-60"
+            className="w-full bg-ink-900 py-3 font-semibold text-white transition hover:bg-ink-800 disabled:opacity-60"
           >
             {loading ? 'Signing in…' : 'Sign in & continue'}
           </button>
@@ -210,7 +211,7 @@ export function CheckoutAuthPanel({ onAuth, defaultMode = 'signin' }: Props) {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-xl bg-ink-900 py-3 font-semibold text-white transition hover:bg-ink-800 disabled:opacity-60"
+            className="w-full bg-ink-900 py-3 font-semibold text-white transition hover:bg-ink-800 disabled:opacity-60"
           >
             {loading ? 'Creating account…' : 'Create account & continue'}
           </button>

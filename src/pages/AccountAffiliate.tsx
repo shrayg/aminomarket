@@ -78,7 +78,7 @@ function ApplyForm({ onSubmitted }: { onSubmitted: (status: string) => void }) {
       <button
         type="submit"
         disabled={submitting}
-        className="rounded-xl bg-ink-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-ink-800 disabled:opacity-60"
+        className="bg-ink-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-ink-800 disabled:opacity-60"
       >
         {submitting ? 'Submitting...' : 'Submit application'}
       </button>
@@ -262,7 +262,7 @@ function PayoutPanel({
               setSuccessMessage('')
               setOpen(true)
             }}
-            className="rounded-xl bg-ink-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-ink-800 disabled:opacity-50"
+            className="bg-ink-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-ink-800 disabled:opacity-50"
             title={disabled ? 'No estimated commission to request yet.' : ''}
           >
             Request payout
@@ -291,7 +291,7 @@ function PayoutPanel({
             <button
               type="submit"
               disabled={submitting}
-              className="rounded-xl bg-ink-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-ink-800 disabled:opacity-60"
+              className="bg-ink-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-ink-800 disabled:opacity-60"
             >
               {submitting ? 'Sending...' : 'Submit request'}
             </button>

@@ -206,7 +206,7 @@ export function Contact() {
             <button
               type="submit"
               disabled={submitting}
-              className="rounded-xl bg-ink-900 px-8 py-3 font-semibold text-white transition hover:bg-ink-800 disabled:opacity-60"
+              className="bg-ink-900 px-8 py-3 font-semibold text-white transition hover:bg-ink-800 disabled:opacity-60"
             >
               {submitting ? 'Sending...' : 'Send Message'}
             </button>

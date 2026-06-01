@@ -40,10 +40,10 @@ export function ForgotPassword() {
           />
         </div>
         {message && <p className="rounded-xl bg-green-50 p-4 text-sm text-green-700">{message}</p>}
-        {error && <p className="rounded-xl bg-red-50 p-4 text-sm text-red-700">{error}</p>}
+        {error && <p className="bg-red-50 p-4 text-sm text-red-700">{error}</p>}
         <button
           type="submit"
-          className="w-full rounded-xl bg-ink-900 py-4 font-semibold text-white"
+          className="w-full bg-ink-900 py-4 font-semibold text-white"
         >
           Submit request
         </button>

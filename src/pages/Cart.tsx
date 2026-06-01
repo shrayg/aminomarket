@@ -16,7 +16,7 @@ export function Cart() {
         </h1>
         <Link
           to="/shop"
-          className="mt-6 inline-block rounded-xl bg-ink-900 px-8 py-3 font-semibold text-white transition hover:bg-ink-800"
+          className="mt-6 inline-block bg-ink-900 px-8 py-3 font-semibold text-white transition hover:bg-ink-800"
         >
           Return to shop
         </Link>
@@ -62,14 +62,14 @@ export function Cart() {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                className="rounded-lg border border-ink-200 px-3 py-1.5 text-sm font-medium hover:bg-ink-50"
+                className="border border-ink-200 px-3 py-1.5 text-sm font-medium hover:bg-ink-50"
               >
                 −
               </button>
               <span className="w-8 text-center font-medium">{item.quantity}</span>
               <button
                 onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                className="rounded-lg border border-ink-200 px-3 py-1.5 text-sm font-medium hover:bg-ink-50"
+                className="border border-ink-200 px-3 py-1.5 text-sm font-medium hover:bg-ink-50"
               >
                 +
               </button>
@@ -97,7 +97,7 @@ export function Cart() {
           </p>
           <Link
             to="/checkout"
-            className="mt-4 inline-block rounded-xl bg-ink-900 px-8 py-4 font-semibold text-white transition hover:bg-ink-800"
+            className="mt-4 inline-block bg-ink-900 px-8 py-4 font-semibold text-white transition hover:bg-ink-800"
           >
             Proceed to checkout
           </Link>

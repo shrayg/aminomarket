@@ -5,7 +5,7 @@ import { api } from '@/lib/api'
 import { saveSession } from '@/lib/auth'
 
 export function Login() {
-  const [email, setEmail] = useState('')
+  const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -17,7 +17,7 @@ export function Login() {
     setLoading(true)
     setError('')
     try {
-      const { token, user } = await api.auth.login(email, password)
+      const { token, user } = await api.auth.login(identifier.trim(), password)
       saveSession(token, user)
       const destination = (location.state as { from?: string } | null)?.from || '/account'
       navigate(destination, { replace: true })
@@ -38,12 +38,13 @@ export function Login() {
 
       <form onSubmit={handleSubmit} className="mt-10 space-y-6">
         <div>
-          <label className="block text-sm font-medium text-ink-700">Email</label>
+          <label className="block text-sm font-medium text-ink-700">Email or username</label>
           <input
-            type="email"
+            type="text"
             required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            autoComplete="username"
+            value={identifier}
+            onChange={(e) => setIdentifier(e.target.value)}
             className="mt-2 w-full rounded-xl border border-ink-200 px-4 py-3 focus:border-ink-900 focus:outline-none focus:ring-2 focus:ring-ink-900/20"
           />
         </div>
@@ -52,6 +53,7 @@ export function Login() {
           <input
             type="password"
             required
+            autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="mt-2 w-full rounded-xl border border-ink-200 px-4 py-3 focus:border-ink-900 focus:outline-none focus:ring-2 focus:ring-ink-900/20"
@@ -68,7 +70,7 @@ export function Login() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-xl bg-ink-900 py-4 font-semibold text-white transition hover:bg-ink-800 disabled:opacity-60"
+          className="w-full bg-ink-900 py-4 font-semibold text-white transition hover:bg-ink-800 disabled:opacity-60"
         >
           {loading ? 'Logging in...' : 'Login'}
         </button>

@@ -46,7 +46,7 @@ export function AccountDetails() {
             <input value={user?.email || ''} disabled className="mt-2 w-full rounded-xl border border-ink-200 bg-ink-50 px-4 py-3 text-ink-500" />
           </label>
           {profileMessage && <p className="text-sm text-ink-600">{profileMessage}</p>}
-          <button type="submit" className="rounded-xl bg-ink-900 px-5 py-3 text-sm font-semibold text-white">Save profile</button>
+          <button type="submit" className="bg-ink-900 px-5 py-3 text-sm font-semibold text-white">Save profile</button>
         </form>
 
         <form onSubmit={updatePassword} className="space-y-4 rounded-2xl border border-ink-200 p-6">
@@ -54,7 +54,7 @@ export function AccountDetails() {
           <input type="password" required placeholder="Current password" value={passwords.currentPassword} onChange={(e) => setPasswords({ ...passwords, currentPassword: e.target.value })} className="w-full rounded-xl border border-ink-200 px-4 py-3" />
           <input type="password" required minLength={6} placeholder="New password" value={passwords.newPassword} onChange={(e) => setPasswords({ ...passwords, newPassword: e.target.value })} className="w-full rounded-xl border border-ink-200 px-4 py-3" />
           {passwordMessage && <p className="text-sm text-ink-600">{passwordMessage}</p>}
-          <button type="submit" className="rounded-xl bg-ink-900 px-5 py-3 text-sm font-semibold text-white">Update password</button>
+          <button type="submit" className="bg-ink-900 px-5 py-3 text-sm font-semibold text-white">Update password</button>
         </form>
       </div>
     </AccountShell>

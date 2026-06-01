@@ -29,7 +29,7 @@ export function OrderSuccess() {
       </p>
       <Link
         to="/shop"
-        className="mt-10 inline-block rounded-xl bg-ink-900 px-8 py-4 font-semibold text-white transition hover:bg-ink-800"
+        className="mt-10 inline-block bg-ink-900 px-8 py-4 font-semibold text-white transition hover:bg-ink-800"
       >
         Continue shopping
       </Link>

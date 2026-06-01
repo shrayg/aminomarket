@@ -454,7 +454,7 @@ export function Checkout() {
             )}
 
             {quoteError && (
-              <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{quoteError}</p>
+              <p className="bg-red-50 px-4 py-3 text-sm text-red-700">{quoteError}</p>
             )}
           </fieldset>
 
@@ -575,13 +575,13 @@ export function Checkout() {
             )}
 
             {submitError && (
-              <p className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{submitError}</p>
+              <p className="mt-4 bg-red-50 px-4 py-3 text-sm text-red-700">{submitError}</p>
             )}
 
             <button
               type="submit"
               disabled={!canSubmit}
-              className="mt-6 w-full rounded-xl bg-ink-900 py-4 font-semibold text-white transition hover:bg-ink-800 disabled:cursor-not-allowed disabled:opacity-50"
+              className="mt-6 w-full bg-ink-900 py-4 font-semibold text-white transition hover:bg-ink-800 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {submitting ? 'Redirecting to payment…' : 'Complete Order'}
             </button>

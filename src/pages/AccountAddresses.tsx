@@ -94,7 +94,7 @@ export function AccountAddresses() {
           </article>
         ))}
         {!showForm && (
-          <button type="button" onClick={() => setShowForm(true)} className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-ink-300 p-5 text-sm font-semibold text-ink-700 hover:bg-ink-50">
+          <button type="button" onClick={() => setShowForm(true)} className="flex w-full items-center justify-center gap-2 border border-dashed border-ink-300 p-5 text-sm font-semibold text-ink-700 hover:bg-ink-50">
             <Plus className="h-4 w-4" />
             Add address
           </button>
@@ -122,8 +122,8 @@ export function AccountAddresses() {
           </label>
           {error && <p className="text-sm text-red-600">{error}</p>}
           <div className="flex gap-3">
-            <button type="submit" className="rounded-xl bg-ink-900 px-5 py-3 text-sm font-semibold text-white">Save address</button>
-            <button type="button" onClick={reset} className="rounded-xl border border-ink-200 px-5 py-3 text-sm font-semibold text-ink-700">Cancel</button>
+            <button type="submit" className="bg-ink-900 px-5 py-3 text-sm font-semibold text-white">Save address</button>
+            <button type="button" onClick={reset} className="border border-ink-200 px-5 py-3 text-sm font-semibold text-ink-700">Cancel</button>
           </div>
         </form>
       )}

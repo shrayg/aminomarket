@@ -122,18 +122,40 @@ router.post('/register', async (req, res) => {
 
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password required' })
+    // Accept either { identifier } (email OR username) or legacy { email }.
+    const rawIdentifier = req.body?.identifier ?? req.body?.email
+    const { password } = req.body
+    const identifier = clean(rawIdentifier, 320)
+    if (!identifier || !password) {
+      return res.status(400).json({ error: 'Email or username and password required' })
     }
 
     const db = getSupabase()
-    const { data: user, error } = await db
-      .from('app_users')
-      .select('id, email, name, password_hash, marketing_email_opt_in, marketing_sms_opt_in')
-      .eq('email', normalizedEmail(email))
-      .maybeSingle()
+    const looksLikeEmail = identifier.includes('@')
+    // Email is case-insensitive; usernames (stored in `name`) are matched
+    // case-insensitively too via ilike to avoid frustrating users who
+    // typed mixed case at signup. Both are tried so users can sign in
+    // with whichever credential they remember.
+    const { data: matches, error } = looksLikeEmail
+      ? await db
+          .from('app_users')
+          .select('id, email, name, password_hash, marketing_email_opt_in, marketing_sms_opt_in')
+          .eq('email', normalizedEmail(identifier))
+          .limit(1)
+      : await db
+          .from('app_users')
+          .select('id, email, name, password_hash, marketing_email_opt_in, marketing_sms_opt_in')
+          .ilike('name', identifier)
+          .limit(2)
     throwIfSupabaseError(error)
+
+    // For username lookups we refuse to authenticate if more than one
+    // account shares the (display-name) handle, so a duplicate display
+    // name cannot be used to confuse the password check.
+    if (!matches || matches.length === 0 || (!looksLikeEmail && matches.length > 1)) {
+      return res.status(401).json({ error: 'Invalid credentials' })
+    }
+    const user = matches[0]
 
     if (!user || !user.password_hash) {
       return res.status(401).json({ error: 'Invalid credentials' })

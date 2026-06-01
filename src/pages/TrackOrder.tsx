@@ -51,12 +51,12 @@ export function TrackOrder() {
         </div>
         <button
           type="submit"
-          className="w-full rounded-xl bg-ink-900 py-4 font-semibold text-white transition hover:bg-ink-800"
+          className="w-full bg-ink-900 py-4 font-semibold text-white transition hover:bg-ink-800"
         >
           Track
         </button>
       </form>
-      {error && <p className="mt-6 rounded-xl bg-red-50 p-4 text-sm text-red-700">{error}</p>}
+      {error && <p className="mt-6 bg-red-50 p-4 text-sm text-red-700">{error}</p>}
       {order && (
         <div className="mt-6 rounded-2xl border border-ink-200 p-5">
           <p className="text-xs uppercase tracking-wider text-ink-500">Fulfillment status</p>

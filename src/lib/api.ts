@@ -149,10 +149,10 @@ export const api = {
     get: (slug: string) => fetchApi(`/products/${slug}`),
   },
   auth: {
-    login: (email: string, password: string) =>
+    login: (identifier: string, password: string) =>
       fetchApi('/auth/login', {
         method: 'POST',
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ identifier, password }),
       }),
     register: (data: {
       email: string

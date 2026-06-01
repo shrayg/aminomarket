@@ -27,7 +27,7 @@ export function AccountOrders() {
     <AccountShell title="Order History" subtitle="View your paid orders and fulfillment progress" back>
       <div className="mt-10 space-y-4">
         {loading && <p className="text-sm text-ink-500">Loading orders...</p>}
-        {error && <p className="rounded-xl bg-red-50 p-4 text-sm text-red-700">{error}</p>}
+        {error && <p className="bg-red-50 p-4 text-sm text-red-700">{error}</p>}
         {!loading && !error && orders.length === 0 && (
           <div className="rounded-2xl border border-ink-200 p-8 text-center">
             <PackageSearch className="mx-auto h-8 w-8 text-ink-400" />

@@ -30,7 +30,7 @@ export function AccountLoyalty() {
     <AccountShell title="Loyalty Rewards" subtitle="Earn an automatic 10% off after $300 in lifetime spend" back>
       <div className="mt-10 space-y-6">
         {loading && <p className="text-sm text-ink-500">Loading loyalty status...</p>}
-        {error && <p className="rounded-xl bg-red-50 p-4 text-sm text-red-700">{error}</p>}
+        {error && <p className="bg-red-50 p-4 text-sm text-red-700">{error}</p>}
 
         {!loading && !error && status && (
           <>
