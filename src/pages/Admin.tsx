@@ -80,7 +80,8 @@ type Customer = {
 }
 type RotatingCode = {
   code: string
-  hourBucket: number
+  bucket?: number
+  hourBucket?: number
   validFrom: string
   validTo: string
   expiresInSeconds: number
@@ -418,11 +419,9 @@ function RangeChart({
           <p className="text-lg font-bold text-ink-900">{formatValue(total)}</p>
         </div>
       </div>
-      <div className="mt-6 flex h-40 items-end gap-1">
-        {points.length === 0 ? (
-          <p className="m-auto text-sm text-ink-400">No data in this window.</p>
-        ) : (
-          points.map((point) => {
+      <div className="relative mt-6 h-40">
+        <div className="absolute inset-0 flex items-end gap-1">
+          {points.map((point) => {
             const value = Number(point.value || 0)
             const label = formatBucketLabel(range, point.bucketStart)
             return (
@@ -437,7 +436,12 @@ function RangeChart({
                 />
               </div>
             )
-          })
+          })}
+        </div>
+        {total === 0 && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <p className="text-sm text-ink-400">No data in this window.</p>
+          </div>
         )}
       </div>
       <div className="mt-2 flex justify-between text-[10px] text-ink-400">
@@ -484,15 +488,19 @@ function StatusBadge({ value }: { value: string }) {
 }
 
 function formatCountdown(seconds: number) {
-  if (seconds <= 0) return '00:00'
-  const m = Math.floor(seconds / 60)
+  if (seconds <= 0) return '00:00:00'
+  const h = Math.floor(seconds / 3600)
+  const m = Math.floor((seconds % 3600) / 60)
   const s = seconds % 60
+  if (h > 0) {
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+  }
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
 }
 
 // Decode the `exp` claim out of an admin JWT without verifying the signature
-// (that's the server's job). Used to schedule the client-side auto-logout that
-// fires the moment the hourly code rotates.
+// (that's the server's job). Used to schedule the client-side auto-logout
+// that fires the moment the access code rotates.
 function decodeJwtExpMs(token: string): number {
   if (!token) return 0
   try {
@@ -510,7 +518,7 @@ const ADMIN_LOGOUT_EVENT = 'amp-admin-force-logout'
 
 // Centralized authenticated fetch. Attaches the bearer token, normalizes JSON
 // content-type, and raises a global force-logout event on 401 so every caller
-// reacts identically when the hourly code expires mid-session.
+// reacts identically when the access code rotates mid-session.
 async function adminFetch(
   token: string,
   input: RequestInfo,
@@ -563,7 +571,7 @@ function RotatingCodeCard({ token }: { token: string }) {
     void load()
   }, [load])
 
-  // Tick every second for countdown; auto-reload when the hour rolls over.
+  // Tick every second for countdown; auto-reload when the bucket rolls over.
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(interval)
@@ -617,8 +625,8 @@ function RotatingCodeCard({ token }: { token: string }) {
             <KeyRound className="h-5 w-5 text-accent-light" />
           </div>
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-accent-light">Hourly access code</p>
-            <h2 className="mt-1 text-base font-bold">Rotates every hour, broadcast to Discord</h2>
+            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-accent-light">Daily access code</p>
+            <h2 className="mt-1 text-base font-bold">Rotates daily, broadcast to the ops channel</h2>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -664,7 +672,12 @@ function RotatingCodeCard({ token }: { token: string }) {
           <p className="font-mono text-2xl font-bold text-white">{formatCountdown(remaining)}</p>
           {data && (
             <p className="text-[10px] text-white/40">
-              Next reset {new Date(data.validTo).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              Next reset{' '}
+              {new Date(data.validTo).toLocaleString([], {
+                weekday: 'short',
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
             </p>
           )}
         </div>
@@ -1556,12 +1569,12 @@ function AdminLogin({ onLogin }: { onLogin: (password: string) => Promise<void> 
         </p>
         <h1 className="mt-2 text-2xl font-bold text-ink-900">Admin dashboard</h1>
         <p className="mt-2 text-sm leading-relaxed text-ink-500">
-          Sign in with the current hourly access code. The code rotates every hour and your
-          session ends the moment it expires.
+          Sign in with the current daily access code from the ops channel. The code rotates once
+          per day and your session ends the moment it expires.
         </p>
         <label className="mt-6 block">
           <span className="text-xs font-bold uppercase tracking-wider text-ink-500">
-            Hourly access code
+            Daily access code
           </span>
           <input
             type="password"
@@ -1609,11 +1622,11 @@ export function Admin() {
   }, [])
 
   // Listen for forced logouts triggered anywhere in the tree by adminFetch on a
-  // 401 response (typically: hourly code rotated mid-session).
+  // 401 response (typically: access code rotated mid-session).
   useEffect(() => {
     function onForce() {
       logout()
-      setError('Your session ended because the hourly access code rotated. Sign in with the new code.')
+      setError('Your session ended because the access code rotated. Sign in with the new daily code.')
     }
     window.addEventListener(ADMIN_LOGOUT_EVENT, onForce)
     return () => window.removeEventListener(ADMIN_LOGOUT_EVENT, onForce)
@@ -1628,7 +1641,7 @@ export function Admin() {
     if (!expMs) return
     const fire = () => {
       logout()
-      setError('Your session expired. Sign in with the latest hourly access code.')
+      setError('Your session expired. Sign in with the latest daily access code.')
     }
     const msLeft = expMs - Date.now()
     if (msLeft <= 0) {

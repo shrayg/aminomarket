@@ -1,6 +1,6 @@
 import crypto from 'node:crypto'
 import jwt from 'jsonwebtoken'
-import { getCurrentHourCode } from '../services/admin-code.js'
+import { getCurrentAccessCode } from '../services/admin-code.js'
 
 const ADMIN_JWT_SECRET =
   process.env.ADMIN_JWT_SECRET ||
@@ -28,9 +28,9 @@ function safeEqual(value, expected) {
   return crypto.timingSafeEqual(left, right)
 }
 
-// The admin "password" is the current hourly rotating access code (broadcast to
-// Discord via /api/admin/code/notify). The issued JWT expires exactly when the
-// code rotates so a session can never outlive the code that opened it.
+// The admin "password" is the current rotating access code (broadcast to the
+// ops channel via /api/admin/code/notify). The issued JWT expires exactly when
+// the code rotates so a session can never outlive the code that opened it.
 export function createAdminToken(submittedCode, ip = 'unknown') {
   const record = getAttemptRecord(ip)
   if (record.count >= MAX_ATTEMPTS) {
@@ -39,7 +39,7 @@ export function createAdminToken(submittedCode, ip = 'unknown') {
     throw error
   }
 
-  const codeInfo = getCurrentHourCode()
+  const codeInfo = getCurrentAccessCode()
   const submitted = String(submittedCode || '').trim()
   if (!submitted || !safeEqual(submitted, codeInfo.code)) {
     record.count += 1
@@ -52,10 +52,11 @@ export function createAdminToken(submittedCode, ip = 'unknown') {
 
   const expSeconds = Math.floor(new Date(codeInfo.validTo).getTime() / 1000)
   const nowSeconds = Math.floor(Date.now() / 1000)
-  // Refuse to issue a token with <2s of life (would log the operator out before
-  // the dashboard finished loading); they should wait for the next rotation.
-  if (expSeconds - nowSeconds < 2) {
-    const error = new Error('Access code is about to rotate. Wait for the next code in Discord.')
+  // Refuse to issue a token with <30s of life left (would log the operator
+  // out before the dashboard finished loading); they should wait for the next
+  // rotation.
+  if (expSeconds - nowSeconds < 30) {
+    const error = new Error('Access code is about to rotate. Try again after the next broadcast.')
     error.statusCode = 401
     throw error
   }

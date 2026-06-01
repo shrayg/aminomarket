@@ -11,7 +11,7 @@ import {
   parseBatchFromNote,
   saveFulfillment,
 } from '../services/analytics-store.js'
-import { getCurrentHourCode, postCodeToDiscord } from '../services/admin-code.js'
+import { getCurrentAccessCode, postCodeToDiscord } from '../services/admin-code.js'
 import { postManufactureBatch } from '../services/manufacture-discord.js'
 import { approveAffiliate, denyAffiliate } from '../services/affiliate.js'
 import { getSupabase, throwIfSupabaseError } from '../lib/supabase.js'
@@ -184,8 +184,20 @@ function buildRangeSeries(samples, earliestMs) {
   return out
 }
 
-function buildAnalyticsSummary({ sessions, events, storageMode }, days, engagedThresholdSeconds) {
+// `metricsDays` controls the operator-selected window that drives the metric
+// cards, daily mini-chart, traffic sources, top paths, products, and searches.
+// The full `sessions` / `events` arrays span up to a year so the chart range
+// selector (15m -> 1y -> all) has data; each metric is filtered to the narrow
+// window before counting so the cards never aggregate stale data.
+function buildAnalyticsSummary({ sessions, events, storageMode }, metricsDays, engagedThresholdSeconds) {
   const threshold = normalizeEngagedThreshold(engagedThresholdSeconds)
+  const sinceMetricsMs = Date.now() - metricsDays * DAY
+
+  const sessionsInWindow = sessions.filter(
+    (s) => +new Date(s.startedAt) >= sinceMetricsMs
+  )
+  const eventsInWindow = events.filter((e) => +new Date(e.createdAt) >= sinceMetricsMs)
+
   const daily = new Map()
   const paths = new Map()
   const traffic = new Map()
@@ -193,8 +205,8 @@ function buildAnalyticsSummary({ sessions, events, storageMode }, days, engagedT
   const searches = new Map()
   const eventCounts = new Map()
 
-  for (let offset = days - 1; offset >= 0; offset -= 1) {
-    const date = new Date(Date.now() - offset * 24 * 60 * 60 * 1000)
+  for (let offset = metricsDays - 1; offset >= 0; offset -= 1) {
+    const date = new Date(Date.now() - offset * DAY)
     daily.set(dayKey(date), {
       date: dayKey(date),
       visits: 0,
@@ -204,7 +216,7 @@ function buildAnalyticsSummary({ sessions, events, storageMode }, days, engagedT
     })
   }
 
-  for (const session of sessions) {
+  for (const session of sessionsInWindow) {
     const date = dayKey(session.startedAt)
     const bucket = daily.get(date)
     const isEngaged = (session.durationSeconds || 0) >= threshold
@@ -215,7 +227,7 @@ function buildAnalyticsSummary({ sessions, events, storageMode }, days, engagedT
     increment(traffic, session.source || 'direct')
   }
 
-  for (const event of events) {
+  for (const event of eventsInWindow) {
     increment(eventCounts, event.type)
     const date = dayKey(event.createdAt)
     const bucket = daily.get(date)
@@ -249,20 +261,27 @@ function buildAnalyticsSummary({ sessions, events, storageMode }, days, engagedT
     }
   }
 
-  const engagedSessions = sessions.filter(
+  const engagedSessionsInWindow = sessionsInWindow.filter(
     (session) => (session.durationSeconds || 0) >= threshold
   )
-  const checkoutSessions = sessions.filter((session) => session.checkoutStarted)
-  const convertedSessions = sessions.filter((session) => session.converted)
-  const averageEngagedSeconds = engagedSessions.length
+  const checkoutSessionsInWindow = sessionsInWindow.filter(
+    (session) => session.checkoutStarted
+  )
+  const convertedSessionsInWindow = sessionsInWindow.filter((session) => session.converted)
+  const averageEngagedSeconds = engagedSessionsInWindow.length
     ? Math.round(
-        engagedSessions.reduce((sum, session) => sum + session.durationSeconds, 0) /
-          engagedSessions.length
+        engagedSessionsInWindow.reduce((sum, session) => sum + session.durationSeconds, 0) /
+          engagedSessionsInWindow.length
       )
     : 0
 
+  // Series buckets use the FULL dataset (whole lookback window) so the chart
+  // range selector (15m / 1h / 1d / 1w / 1mo / 1y / all) always has data to
+  // draw, regardless of the metric-card window the operator picked.
   const visitSamples = sessions.map((s) => ({ ts: +new Date(s.startedAt), value: 1 }))
-  const engagedSamples = engagedSessions.map((s) => ({ ts: +new Date(s.startedAt), value: 1 }))
+  const engagedSamples = sessions
+    .filter((s) => (s.durationSeconds || 0) >= threshold)
+    .map((s) => ({ ts: +new Date(s.startedAt), value: 1 }))
   const productViewSamples = events
     .filter((e) => e.type === 'product_view')
     .map((e) => ({ ts: +new Date(e.createdAt), value: 1 }))
@@ -273,8 +292,6 @@ function buildAnalyticsSummary({ sessions, events, storageMode }, days, engagedT
     .filter((e) => e.type === 'checkout_started')
     .map((e) => ({ ts: +new Date(e.createdAt), value: 1 }))
 
-  // Earliest timestamp across all analytics sources anchors the "all time"
-  // chart range; if there is no data yet, the bucketer falls back to 1 year.
   const earliestMs = [
     ...visitSamples,
     ...productViewSamples,
@@ -289,14 +306,14 @@ function buildAnalyticsSummary({ sessions, events, storageMode }, days, engagedT
     storageMode,
     engagedThresholdSeconds: threshold,
     metrics: {
-      visits: sessions.length,
+      visits: sessionsInWindow.length,
       pageViews: eventCounts.get('page_view') || 0,
-      engagedVisits: engagedSessions.length,
+      engagedVisits: engagedSessionsInWindow.length,
       averageEngagedSeconds,
       productViews: eventCounts.get('product_view') || 0,
       addToCarts: eventCounts.get('add_to_cart') || 0,
-      checkoutStarts: checkoutSessions.length,
-      trackedConversions: convertedSessions.length,
+      checkoutStarts: checkoutSessionsInWindow.length,
+      trackedConversions: convertedSessionsInWindow.length,
     },
     daily: [...daily.values()],
     series: {
@@ -324,7 +341,12 @@ function emptyStripeSeries() {
   return out
 }
 
-async function stripeSummary(days, fulfillmentById) {
+// `metricsDays` controls the metric-card window (and which orders the operator
+// sees in the Orders / Customers tabs). `seriesLookbackDays` is wider so the
+// 1y / All-time chart range has data to bucket. Stripe is still capped at 100
+// sessions per call, so very long lookbacks just mean "the most recent 100
+// sessions in that window".
+async function stripeSummary(metricsDays, seriesLookbackDays, fulfillmentById) {
   if (!stripe) {
     return {
       configured: false,
@@ -341,24 +363,33 @@ async function stripeSummary(days, fulfillmentById) {
   }
 
   try {
-    const since = Math.floor((Date.now() - days * 24 * 60 * 60 * 1000) / 1000)
+    const lookbackDays = Math.max(metricsDays, seriesLookbackDays)
+    const sinceLookbackMs = Date.now() - lookbackDays * DAY
+    const sinceMetricsMs = Date.now() - metricsDays * DAY
     const response = await stripe.checkout.sessions.list({
       limit: 100,
-      created: { gte: since },
+      created: { gte: Math.floor(sinceLookbackMs / 1000) },
       expand: ['data.line_items'],
     })
-    const orders = response.data.map((session) => normalizeOrder(session, fulfillmentById))
-    const paidOrders = orders.filter((order) => order.paymentStatus === 'paid')
-    const revenue = paidOrders.reduce((sum, order) => sum + order.total, 0)
+    const allOrders = response.data.map((session) =>
+      normalizeOrder(session, fulfillmentById)
+    )
+    const ordersInWindow = allOrders.filter(
+      (order) => +new Date(order.createdAt) >= sinceMetricsMs
+    )
+    const paidOrdersInWindow = ordersInWindow.filter(
+      (order) => order.paymentStatus === 'paid'
+    )
+    const revenue = paidOrdersInWindow.reduce((sum, order) => sum + order.total, 0)
     const dailyRevenue = new Map()
     const paymentStatuses = new Map()
     const purchasedProducts = new Map()
     const customers = new Map()
 
-    for (const order of orders) {
+    for (const order of ordersInWindow) {
       increment(paymentStatuses, order.paymentStatus)
-      if (order.paymentStatus === 'paid') increment(dailyRevenue, order.createdAt.slice(0, 10), order.total)
       if (order.paymentStatus === 'paid') {
+        increment(dailyRevenue, order.createdAt.slice(0, 10), order.total)
         for (const item of order.items) {
           increment(purchasedProducts, item.name, item.quantity)
         }
@@ -384,11 +415,14 @@ async function stripeSummary(days, fulfillmentById) {
       customers.set(customerKey, customer)
     }
 
-    const revenueSamples = paidOrders.map((order) => ({
+    // Series uses every paid order in the wider lookback so 1y / all-time
+    // charts can plot history beyond the operator's current days selector.
+    const allPaidOrders = allOrders.filter((order) => order.paymentStatus === 'paid')
+    const revenueSamples = allPaidOrders.map((order) => ({
       ts: +new Date(order.createdAt),
       value: order.total,
     }))
-    const paidOrderSamples = paidOrders.map((order) => ({
+    const paidOrderSamples = allPaidOrders.map((order) => ({
       ts: +new Date(order.createdAt),
       value: 1,
     }))
@@ -402,15 +436,20 @@ async function stripeSummary(days, fulfillmentById) {
       warning: response.has_more
         ? 'Showing the most recent 100 Stripe Checkout sessions for this period.'
         : null,
-      orders,
+      orders: ordersInWindow,
       customers: [...customers.values()].sort((a, b) => b.totalSpent - a.totalSpent),
       metrics: {
-        paidOrders: paidOrders.length,
+        paidOrders: paidOrdersInWindow.length,
         revenue,
-        averageOrderValue: paidOrders.length ? revenue / paidOrders.length : 0,
-        openCheckouts: orders.filter((order) => order.checkoutStatus === 'open').length,
+        averageOrderValue: paidOrdersInWindow.length
+          ? revenue / paidOrdersInWindow.length
+          : 0,
+        openCheckouts: ordersInWindow.filter((order) => order.checkoutStatus === 'open')
+          .length,
       },
-      dailyRevenue: topEntries(dailyRevenue, days).sort((a, b) => a.name.localeCompare(b.name)),
+      dailyRevenue: topEntries(dailyRevenue, metricsDays).sort((a, b) =>
+        a.name.localeCompare(b.name)
+      ),
       revenueSeries: buildRangeSeries(revenueSamples, earliestStripeMs),
       paidOrderSeries: buildRangeSeries(paidOrderSamples, earliestStripeMs),
       paymentStatuses: topEntries(paymentStatuses),
@@ -441,12 +480,12 @@ function cronOrAdmin(req, res, next) {
 }
 
 router.get('/code', requireAdmin, (_req, res) => {
-  res.json(getCurrentHourCode())
+  res.json(getCurrentAccessCode())
 })
 
-// Vercel Cron hits this hourly via GET; admin UI can also trigger via POST
+// Vercel Cron hits this daily via GET; admin UI can also trigger via POST.
 async function notifyHandler(_req, res) {
-  const codeInfo = getCurrentHourCode()
+  const codeInfo = getCurrentAccessCode()
   const delivery = await postCodeToDiscord(codeInfo)
   res.json({ ...codeInfo, delivery })
 }
@@ -466,9 +505,9 @@ router.post('/login', (req, res) => {
 router.get('/dashboard', requireAdmin, async (req, res) => {
   const days = Math.min(90, Math.max(7, Number(req.query.days) || 30))
   const engagedThresholdSeconds = normalizeEngagedThreshold(req.query.engagedThreshold)
-  // Always pull a year of analytics so the chart range selector (15m -> 1y ->
-  // all time) has data to bucket regardless of the metric-card window. The
-  // memory/Supabase row limits in listAnalytics keep this bounded.
+  // Always pull at least a year of analytics so the chart range selector
+  // (15m -> 1y -> all time) has data to bucket. Metric cards still only count
+  // events inside the operator's days window (see buildAnalyticsSummary).
   const seriesLookbackDays = Math.max(days, 365)
   const [analytics, fulfillments, registeredUsers] = await Promise.all([
     listAnalytics(seriesLookbackDays),
@@ -478,7 +517,7 @@ router.get('/dashboard', requireAdmin, async (req, res) => {
   const fulfillmentById = new Map(
     fulfillments.map((record) => [record.stripeSessionId, record])
   )
-  const stripeData = await stripeSummary(seriesLookbackDays, fulfillmentById)
+  const stripeData = await stripeSummary(days, seriesLookbackDays, fulfillmentById)
 
   res.json({
     generatedAt: new Date().toISOString(),
