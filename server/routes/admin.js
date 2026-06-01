@@ -13,6 +13,8 @@ import {
 } from '../services/analytics-store.js'
 import { getCurrentHourCode, postCodeToDiscord } from '../services/admin-code.js'
 import { postManufactureBatch } from '../services/manufacture-discord.js'
+import { approveAffiliate, denyAffiliate } from '../services/affiliate.js'
+import { getSupabase, throwIfSupabaseError } from '../lib/supabase.js'
 
 const router = Router()
 const stripe = process.env.STRIPE_SECRET_KEY
@@ -653,6 +655,91 @@ router.post('/manufacture/batches', requireAdmin, async (req, res) => {
     aggregate,
     delivery,
   })
+})
+
+// ---------------------------------------------------------------------------
+// User management — list accounts (with optional affiliate-status filter) and
+// promote / deny affiliate applications. Admin-only; mounted under /api/admin.
+// ---------------------------------------------------------------------------
+
+const ALLOWED_USER_STATUS_FILTERS = new Set(['none', 'pending', 'approved', 'denied'])
+const ALLOWED_USER_ROLE_FILTERS = new Set(['customer', 'affiliate', 'admin'])
+
+function shapeAdminUser(row) {
+  return {
+    id: row.id,
+    email: row.email,
+    name: row.name || '',
+    role: row.role || 'customer',
+    affiliateStatus: row.affiliate_status || 'none',
+    affiliateCode: row.affiliate_code || null,
+    lifetimeSpendCents: Number(row.lifetime_spend_cents || 0),
+    createdAt: row.created_at,
+  }
+}
+
+router.get('/users', requireAdmin, async (req, res) => {
+  try {
+    const limit = Math.min(500, Math.max(1, Number(req.query.limit) || 200))
+    const offset = Math.max(0, Number(req.query.offset) || 0)
+    const status = typeof req.query.status === 'string' ? req.query.status : ''
+    const role = typeof req.query.role === 'string' ? req.query.role : ''
+
+    let query = getSupabase()
+      .from('app_users')
+      .select(
+        'id, email, name, role, affiliate_status, affiliate_code, lifetime_spend_cents, created_at',
+        { count: 'exact' }
+      )
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1)
+
+    if (status && ALLOWED_USER_STATUS_FILTERS.has(status)) {
+      query = query.eq('affiliate_status', status)
+    }
+    if (role && ALLOWED_USER_ROLE_FILTERS.has(role)) {
+      query = query.eq('role', role)
+    }
+
+    const { data, error, count } = await query
+    throwIfSupabaseError(error)
+    res.json({
+      users: (data || []).map(shapeAdminUser),
+      total: count ?? null,
+      limit,
+      offset,
+    })
+  } catch (err) {
+    console.error('[admin] list users failed:', err)
+    res.status(500).json({ error: err?.message || 'Could not list users.' })
+  }
+})
+
+router.post('/users/:id/affiliate/approve', requireAdmin, async (req, res) => {
+  try {
+    if (!stripe) {
+      return res.status(503).json({
+        error: 'Stripe is not configured; set STRIPE_SECRET_KEY before approving affiliates.',
+      })
+    }
+    const user = await approveAffiliate({ userId: req.params.id, stripeClient: stripe })
+    res.json({ user })
+  } catch (err) {
+    const status = Number.isInteger(err?.statusCode) ? err.statusCode : 500
+    if (status >= 500) console.error('[admin] approve affiliate failed:', err)
+    res.status(status).json({ error: err?.message || 'Could not approve affiliate.' })
+  }
+})
+
+router.post('/users/:id/affiliate/deny', requireAdmin, async (req, res) => {
+  try {
+    const user = await denyAffiliate({ userId: req.params.id })
+    res.json({ user })
+  } catch (err) {
+    const status = Number.isInteger(err?.statusCode) ? err.statusCode : 500
+    if (status >= 500) console.error('[admin] deny affiliate failed:', err)
+    res.status(status).json({ error: err?.message || 'Could not deny affiliate.' })
+  }
 })
 
 export default router

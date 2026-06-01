@@ -9,6 +9,8 @@ import checkoutQuoteRouter from './routes/checkout-quote.js'
 import ordersRouter from './routes/orders.js'
 import analyticsRouter from './routes/analytics.js'
 import adminRouter from './routes/admin.js'
+import loyaltyRouter from './routes/loyalty.js'
+import affiliatesRouter from './routes/affiliates.js'
 import { stripeWebhook } from './routes/stripe-webhook.js'
 
 const app = express()
@@ -44,6 +46,8 @@ app.use('/api/checkout', checkoutRouter)
 app.use('/api/orders', ordersRouter)
 app.use('/api/analytics', analyticsRouter)
 app.use('/api/admin', adminRouter)
+app.use('/api/account/loyalty', loyaltyRouter)
+app.use('/api/account/affiliate', affiliatesRouter)
 
 app.get('/api/health', (_, res) => res.json({ ok: true }))
 

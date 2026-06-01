@@ -1,6 +1,8 @@
 import Stripe from 'stripe'
 import { markAnalyticsConversion } from '../services/analytics-store.js'
 import { recordPaidOrder } from '../services/order-store.js'
+import { incrementLifetimeSpend } from '../services/loyalty.js'
+import { recordRedemptionFromSession } from '../services/affiliate.js'
 import {
   notifyFailedPayment,
   notifyPaidCheckout,
@@ -34,13 +36,44 @@ export async function stripeWebhook(req, res) {
       case 'checkout.session.completed':
       case 'checkout.session.async_payment_succeeded': {
         const session = await stripe.checkout.sessions.retrieve(event.data.object.id, {
-          expand: ['customer', 'line_items.data.price.product', 'payment_intent'],
+          expand: [
+            'customer',
+            'line_items.data.price.product',
+            'payment_intent',
+            'total_details.breakdown.discounts',
+          ],
         })
         await markAnalyticsConversion(session.metadata?.analyticsSessionId)
         if (session.payment_status === 'paid') {
           await recordPaidOrder(session)
           await notifyPaidCheckout(session, event.type)
           await notifyReadyForFulfillment(session)
+
+          // Loyalty tracking is best-effort: a Supabase or Stripe failure
+          // here must not block order fulfillment or cause Stripe to retry
+          // the webhook (which would double-notify Discord, etc.).
+          const appUserId = session.metadata?.appUserId
+          const paidAmountCents = Number(session.amount_total || 0)
+          if (appUserId && paidAmountCents > 0) {
+            try {
+              await incrementLifetimeSpend(appUserId, paidAmountCents, stripe)
+            } catch (loyaltyError) {
+              console.warn(
+                `[loyalty] failed to update lifetime spend for user=${appUserId} session=${session.id}: ${loyaltyError.message}`
+              )
+            }
+          }
+
+          // Affiliate-redemption tracking is also best-effort. Same reasoning:
+          // an affiliate-side failure here must never re-trigger Stripe's
+          // webhook retries because the order is already fulfilled.
+          try {
+            await recordRedemptionFromSession(session)
+          } catch (affiliateError) {
+            console.warn(
+              `[affiliate] failed to record redemption for session=${session.id}: ${affiliateError.message}`
+            )
+          }
         }
         console.log(`[stripe] ${event.type} -> session=${session.id}`)
         break

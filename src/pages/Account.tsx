@@ -9,6 +9,8 @@ export function Account() {
           { to: '/account/orders', title: 'Order History', desc: 'View and track orders' },
           { to: '/account/addresses', title: 'Addresses', desc: 'Manage shipping addresses' },
           { to: '/account/edit', title: 'Account Details', desc: 'Edit your profile' },
+          { to: '/account/loyalty', title: 'Loyalty Rewards', desc: 'Spend $300 lifetime to unlock 10% off forever' },
+          { to: '/account/affiliate', title: 'Affiliate Program', desc: 'Apply or view your dashboard, code, and earnings' },
         ].map((item) => (
           <Link
             key={item.to}

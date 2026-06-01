@@ -76,6 +76,59 @@ export type CustomerOrder = {
   shipping: { name: string; address: object } | null
 }
 
+export type LoyaltyStatus = {
+  lifetimeSpendCents: number
+  thresholdCents: number
+  percentToThreshold: number
+  unlocked: boolean
+  discountPercent: number
+}
+
+export type AffiliateRole = 'customer' | 'affiliate' | 'admin'
+export type AffiliateStatus = 'none' | 'pending' | 'approved' | 'denied'
+
+export type AffiliateOverview =
+  | { status: 'none'; role: AffiliateRole }
+  | {
+      status: 'pending' | 'denied'
+      role: AffiliateRole
+      code?: string | null
+    }
+  | {
+      status: 'approved'
+      role: 'affiliate'
+      code: string
+      totalUses: number
+      totalProcessedCents: number
+      totalShippingCents: number
+      totalTotalCents: number
+      commissionRatePercent: number
+      estimatedCommissionCents: number
+      estimatedCommissionDollars: number
+      tierProgress: {
+        ordersToNextTier: number
+        dollarsToNextTier: number
+      }
+    }
+
+export type AdminUserRow = {
+  id: string
+  email: string
+  name: string
+  role: AffiliateRole
+  affiliateStatus: AffiliateStatus
+  affiliateCode: string | null
+  lifetimeSpendCents: number
+  createdAt: string
+}
+
+export type AdminUserListResponse = {
+  users: AdminUserRow[]
+  total: number | null
+  limit: number
+  offset: number
+}
+
 export async function fetchApi(path: string, opts?: RequestInit) {
   const res = await fetch(`${API}${path}`, {
     ...opts,
@@ -156,6 +209,50 @@ export const api = {
     },
     orders: (): Promise<CustomerOrder[]> =>
       fetchApi('/orders/mine', { headers: authHeaders() }),
+    loyalty: (): Promise<LoyaltyStatus> =>
+      fetchApi('/account/loyalty', { headers: authHeaders() }),
+  },
+  affiliate: {
+    getOverview: (): Promise<AffiliateOverview> =>
+      fetchApi('/account/affiliate', { headers: authHeaders() }),
+    apply: (data: { reason: string; audience: string }) =>
+      fetchApi('/account/affiliate/apply', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify(data),
+      }),
+    requestPayout: (data: { payoutMethod: string }) =>
+      fetchApi('/account/affiliate/payout-request', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify(data),
+      }),
+  },
+  admin: {
+    listUsers: (
+      params: { status?: AffiliateStatus; role?: AffiliateRole; limit?: number; offset?: number },
+      authToken: string
+    ): Promise<AdminUserListResponse> => {
+      const search = new URLSearchParams()
+      if (params.status) search.set('status', params.status)
+      if (params.role) search.set('role', params.role)
+      if (params.limit != null) search.set('limit', String(params.limit))
+      if (params.offset != null) search.set('offset', String(params.offset))
+      const qs = search.toString()
+      return fetchApi(`/admin/users${qs ? `?${qs}` : ''}`, {
+        headers: { Authorization: `Bearer ${authToken}` },
+      })
+    },
+    approveAffiliate: (userId: string, authToken: string): Promise<{ user: AdminUserRow }> =>
+      fetchApi(`/admin/users/${encodeURIComponent(userId)}/affiliate/approve`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${authToken}` },
+      }),
+    denyAffiliate: (userId: string, authToken: string): Promise<{ user: AdminUserRow }> =>
+      fetchApi(`/admin/users/${encodeURIComponent(userId)}/affiliate/deny`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${authToken}` },
+      }),
   },
   newsletter: (email: string) =>
     fetchApi('/newsletter', {

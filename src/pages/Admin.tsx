@@ -152,6 +152,7 @@ type Tab =
   | 'processing'
   | 'orders'
   | 'customers'
+  | 'users'
   | 'payments'
 
 const tabs: { id: Tab; label: string; icon: typeof Activity }[] = [
@@ -162,8 +163,22 @@ const tabs: { id: Tab; label: string; icon: typeof Activity }[] = [
   { id: 'processing', label: 'Processing', icon: Pause },
   { id: 'orders', label: 'Orders', icon: Boxes },
   { id: 'customers', label: 'Customers', icon: Users },
+  { id: 'users', label: 'Users', icon: Users },
   { id: 'payments', label: 'Payments', icon: CreditCard },
 ]
+
+type AdminUserRow = {
+  id: string
+  email: string
+  name: string
+  role: 'customer' | 'affiliate' | 'admin'
+  affiliateStatus: 'none' | 'pending' | 'approved' | 'denied'
+  affiliateCode: string | null
+  lifetimeSpendCents: number
+  createdAt: string
+}
+
+type AffiliateStatusFilter = 'pending' | 'all' | 'none' | 'approved' | 'denied'
 
 const fulfillmentStatuses = ['unfulfilled', 'processing', 'shipping', 'fulfilled', 'cancelled']
 
@@ -1255,6 +1270,265 @@ function ProcessingTab({
   )
 }
 
+function UsersTab({ token }: { token: string }) {
+  const [users, setUsers] = useState<AdminUserRow[]>([])
+  const [statusFilter, setStatusFilter] = useState<AffiliateStatusFilter>('pending')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [busyUserId, setBusyUserId] = useState<string>('')
+  const [feedback, setFeedback] = useState<{ kind: 'success' | 'error'; text: string } | null>(null)
+
+  const load = useCallback(async () => {
+    if (!token) return
+    setLoading(true)
+    setError('')
+    try {
+      const search = new URLSearchParams({ limit: '200' })
+      if (statusFilter !== 'all') search.set('status', statusFilter)
+      const res = await adminFetch(token, `/api/admin/users?${search.toString()}`)
+      const body = await res.json()
+      if (!res.ok) throw new Error(body.error || 'Could not load users.')
+      setUsers(body.users || [])
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not load users.')
+    } finally {
+      setLoading(false)
+    }
+  }, [token, statusFilter])
+
+  useEffect(() => {
+    void load()
+  }, [load])
+
+  async function approve(user: AdminUserRow) {
+    setBusyUserId(user.id)
+    setFeedback(null)
+    try {
+      const res = await adminFetch(token, `/api/admin/users/${encodeURIComponent(user.id)}/affiliate/approve`, {
+        method: 'POST',
+      })
+      const body = await res.json()
+      if (!res.ok) throw new Error(body.error || 'Could not approve affiliate.')
+      const updated = body.user as AdminUserRow
+      setFeedback({
+        kind: 'success',
+        text: `${user.email} promoted to affiliate \u2014 code ${updated?.affiliateCode || '(generated)'}.`,
+      })
+      await load()
+    } catch (err) {
+      setFeedback({ kind: 'error', text: err instanceof Error ? err.message : 'Could not approve affiliate.' })
+    } finally {
+      setBusyUserId('')
+    }
+  }
+
+  async function deny(user: AdminUserRow) {
+    setBusyUserId(user.id)
+    setFeedback(null)
+    try {
+      const res = await adminFetch(token, `/api/admin/users/${encodeURIComponent(user.id)}/affiliate/deny`, {
+        method: 'POST',
+      })
+      const body = await res.json()
+      if (!res.ok) throw new Error(body.error || 'Could not deny affiliate.')
+      setFeedback({ kind: 'success', text: `${user.email} application denied.` })
+      await load()
+    } catch (err) {
+      setFeedback({ kind: 'error', text: err instanceof Error ? err.message : 'Could not deny affiliate.' })
+    } finally {
+      setBusyUserId('')
+    }
+  }
+
+  const filters: { id: AffiliateStatusFilter; label: string }[] = [
+    { id: 'pending', label: 'Pending applications' },
+    { id: 'approved', label: 'Approved' },
+    { id: 'denied', label: 'Denied' },
+    { id: 'none', label: 'No application' },
+    { id: 'all', label: 'All users' },
+  ]
+
+  return (
+    <div className="mt-6 space-y-5">
+      <header className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-bold text-ink-900">Users</h2>
+          <p className="mt-1 text-sm text-ink-500">
+            Review affiliate applications, promote customers manually, and audit role assignments.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => void load()}
+          disabled={loading}
+          className="flex items-center gap-2 border border-ink-200 bg-white px-3 py-2 text-sm font-semibold transition hover:border-ink-400 disabled:opacity-50"
+        >
+          <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+          Refresh
+        </button>
+      </header>
+
+      <div className="flex flex-wrap items-center gap-2">
+        {filters.map((filter) => (
+          <button
+            key={filter.id}
+            type="button"
+            onClick={() => setStatusFilter(filter.id)}
+            className={`px-3 py-2 text-xs font-bold uppercase tracking-wider ${
+              statusFilter === filter.id ? 'bg-ink-900 text-white' : 'border border-ink-200 bg-white text-ink-600'
+            }`}
+          >
+            {filter.label}
+          </button>
+        ))}
+      </div>
+
+      {error && (
+        <div className="flex items-start gap-3 border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" /> {error}
+        </div>
+      )}
+      {feedback && (
+        <div
+          className={`flex items-start gap-3 border p-4 text-sm ${
+            feedback.kind === 'success'
+              ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+              : 'border-rose-200 bg-rose-50 text-rose-800'
+          }`}
+        >
+          {feedback.kind === 'success' ? (
+            <Check className="mt-0.5 h-4 w-4 shrink-0" />
+          ) : (
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          )}
+          {feedback.text}
+        </div>
+      )}
+
+      <Section
+        title={
+          statusFilter === 'pending'
+            ? 'Pending affiliate applications'
+            : statusFilter === 'all'
+              ? 'All users'
+              : `Users \u2014 ${statusFilter}`
+        }
+        subtitle="Promote, approve, or deny affiliate access"
+      >
+        {users.length === 0 ? (
+          <p className="py-10 text-center text-sm text-ink-400">
+            {loading ? 'Loading users...' : 'No users match this filter.'}
+          </p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[920px] text-left text-sm">
+              <thead className="text-xs uppercase tracking-wider text-ink-400">
+                <tr>
+                  <th className="pb-3">User</th>
+                  <th className="pb-3">Signup</th>
+                  <th className="pb-3">Role</th>
+                  <th className="pb-3">Affiliate</th>
+                  <th className="pb-3">Code</th>
+                  <th className="pb-3">Lifetime spend</th>
+                  <th className="pb-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map((user) => {
+                  const isAffiliate = user.role === 'affiliate'
+                  const isPending = user.affiliateStatus === 'pending'
+                  const busy = busyUserId === user.id
+                  return (
+                    <tr key={user.id} className="border-t border-ink-100 align-top">
+                      <td className="py-3">
+                        <p className="font-medium text-ink-900">{user.name || 'Not provided'}</p>
+                        <p className="text-xs text-ink-500">{user.email}</p>
+                        <p className="mt-1 font-mono text-[10px] text-ink-400">{user.id}</p>
+                      </td>
+                      <td className="py-3 text-ink-600">{date(user.createdAt)}</td>
+                      <td className="py-3">
+                        <span
+                          className={`inline-flex px-2 py-1 text-[10px] font-bold uppercase tracking-wider ${
+                            isAffiliate
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : user.role === 'admin'
+                                ? 'bg-sky-100 text-sky-800'
+                                : 'bg-ink-100 text-ink-700'
+                          }`}
+                        >
+                          {user.role}
+                        </span>
+                      </td>
+                      <td className="py-3">
+                        <span
+                          className={`inline-flex px-2 py-1 text-[10px] font-bold uppercase tracking-wider ${
+                            user.affiliateStatus === 'approved'
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : user.affiliateStatus === 'pending'
+                                ? 'bg-amber-100 text-amber-800'
+                                : user.affiliateStatus === 'denied'
+                                  ? 'bg-rose-100 text-rose-800'
+                                  : 'bg-ink-100 text-ink-700'
+                          }`}
+                        >
+                          {user.affiliateStatus}
+                        </span>
+                      </td>
+                      <td className="py-3 font-mono text-xs">
+                        {user.affiliateCode || <span className="text-ink-400">{'\u2014'}</span>}
+                      </td>
+                      <td className="py-3 text-ink-600">{money(user.lifetimeSpendCents / 100)}</td>
+                      <td className="py-3">
+                        <div className="flex flex-wrap items-center justify-end gap-2">
+                          {isPending && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => void approve(user)}
+                                disabled={busy}
+                                className="border border-emerald-700 bg-emerald-700 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-white transition hover:bg-emerald-800 disabled:opacity-50"
+                              >
+                                {busy ? 'Working...' : 'Approve'}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => void deny(user)}
+                                disabled={busy}
+                                className="border border-rose-700 bg-white px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-rose-700 transition hover:bg-rose-50 disabled:opacity-50"
+                              >
+                                Deny
+                              </button>
+                            </>
+                          )}
+                          {!isAffiliate && !isPending && (
+                            <button
+                              type="button"
+                              onClick={() => void approve(user)}
+                              disabled={busy}
+                              className="border border-ink-900 bg-ink-900 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-white transition hover:bg-ink-800 disabled:opacity-50"
+                            >
+                              {busy ? 'Working...' : 'Promote to affiliate'}
+                            </button>
+                          )}
+                          {isAffiliate && (
+                            <span className="text-[10px] uppercase tracking-wider text-ink-400">
+                              Active
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Section>
+    </div>
+  )
+}
+
 function AdminLogin({ onLogin }: { onLogin: (password: string) => Promise<void> }) {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -1803,6 +2077,8 @@ export function Admin() {
                 </Section>
               </div>
             )}
+
+            {activeTab === 'users' && <UsersTab token={token} />}
 
             {activeTab === 'payments' && stripe && (
               <div className="mt-6 space-y-6">

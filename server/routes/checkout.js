@@ -2,7 +2,9 @@ import { Router } from 'express'
 import Stripe from 'stripe'
 import { getCheckoutItem } from '../catalog.js'
 import { getRequestUser } from '../middleware/user-auth.js'
+import { getSupabase, throwIfSupabaseError } from '../lib/supabase.js'
 import { quoteShipping, SHIPPING_CONSTANTS } from '../services/shipping-calc.js'
+import { ensureStripeCustomerForUser } from '../services/loyalty.js'
 
 const router = Router()
 
@@ -146,9 +148,39 @@ router.post('/', async (req, res) => {
     const baseUrl = resolveBaseUrl(req)
     const account = getRequestUser(req)
     const checkoutEmail = account?.email || String(email).trim().toLowerCase()
+
+    // For signed-in users, resolve (or lazily create) a Stripe Customer so
+    // any loyalty coupon attached to that customer auto-applies on this and
+    // every future Checkout Session. Best-effort: a Stripe/Supabase blip
+    // here must not block checkout — fall back to guest behavior.
+    let stripeCustomerId = null
+    if (account?.id) {
+      try {
+        const { data: appUser, error: appUserError } = await getSupabase()
+          .from('app_users')
+          .select('id, email, name, stripe_customer_id')
+          .eq('id', account.id)
+          .maybeSingle()
+        throwIfSupabaseError(appUserError)
+        if (appUser) {
+          stripeCustomerId = await ensureStripeCustomerForUser(appUser, stripe)
+        }
+      } catch (customerError) {
+        console.warn(
+          `[checkout] could not resolve Stripe customer for user=${account.id}: ${customerError.message}`
+        )
+        stripeCustomerId = null
+      }
+    }
+
     const metadata = {}
     if (analyticsSessionId) metadata.analyticsSessionId = String(analyticsSessionId).slice(0, 100)
-    if (account?.id) metadata.appUserId = account.id
+    if (account?.id) {
+      metadata.appUserId = account.id
+      // Also expose under snake_case so external integrations / reporting
+      // queries can rely on a single canonical key.
+      metadata.app_user_id = account.id
+    }
     metadata.ruoAcknowledged = '1'
     metadata.shippingCarrier = matchedRate.carrier
     metadata.shippingService = matchedRate.service
@@ -175,7 +207,7 @@ router.post('/', async (req, res) => {
       ? ['US']
       : [shippingAddress.country, 'US']
 
-    const session = await stripe.checkout.sessions.create({
+    const sessionPayload = {
       payment_method_types: ['card'],
       line_items: normalizedItems.map((item) => ({
         price_data: {
@@ -193,16 +225,25 @@ router.post('/', async (req, res) => {
         adjustable_quantity: { enabled: true, minimum: 1, maximum: 99 },
       })),
       mode: 'payment',
-      customer_creation: 'always',
       success_url: `${baseUrl}/order/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/cart`,
-      customer_email: checkoutEmail,
       billing_address_collection: 'required',
       shipping_address_collection: { allowed_countries: allowedCountries },
       shipping_options: shippingOptions,
       automatic_tax: { enabled: false },
       metadata: Object.keys(metadata).length ? metadata : undefined,
-    })
+    }
+
+    // Stripe rejects `customer` together with `customer_email` /
+    // `customer_creation`, so pick exactly one branch.
+    if (stripeCustomerId) {
+      sessionPayload.customer = stripeCustomerId
+    } else {
+      sessionPayload.customer_creation = 'always'
+      sessionPayload.customer_email = checkoutEmail
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionPayload)
 
     res.json({ url: session.url })
   } catch (err) {
