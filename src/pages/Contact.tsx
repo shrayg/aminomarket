@@ -71,13 +71,13 @@ export function Contact() {
               <span className="underline underline-offset-2">aminomarketsupport@gmail.com</span>
             </a>
             <a
-              href="https://t.me/kaimatsu"
+              href="https://t.me/aminomarketshop"
               target="_blank"
               rel="noreferrer"
               className="group flex items-center gap-3 text-ink-700 transition hover:text-ink-900"
             >
               <Send className="h-4 w-4 text-ink-500 group-hover:text-ink-900" />
-              <span className="underline underline-offset-2">Telegram &mdash; @kaimatsu</span>
+              <span className="underline underline-offset-2">Telegram &mdash; @aminomarketshop</span>
             </a>
             <a
               href="https://discord.gg/gS7prpfSmy"

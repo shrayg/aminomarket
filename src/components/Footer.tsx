@@ -54,13 +54,13 @@ export function Footer() {
               </li>
               <li>
                 <a
-                  href="https://t.me/kaimatsu"
+                  href="https://t.me/aminomarketshop"
                   target="_blank"
                   rel="noreferrer"
                   className="group flex items-center gap-2 text-ink-600 transition hover:text-ink-900"
                 >
                   <Send className="h-3.5 w-3.5 text-ink-400 group-hover:text-ink-900" />
-                  <span className="underline underline-offset-2">Telegram &mdash; @kaimatsu</span>
+                  <span className="underline underline-offset-2">Telegram &mdash; @aminomarketshop</span>
                 </a>
               </li>
               <li>

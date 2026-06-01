@@ -426,12 +426,12 @@ const sections: FAQSection[] = [
               <li>
                 Telegram:{' '}
                 <a
-                  href="https://t.me/kaimatsu"
+                  href="https://t.me/aminomarketshop"
                   target="_blank"
                   rel="noreferrer"
                   className="text-ink-900 underline underline-offset-2 hover:text-accent-dark"
                 >
-                  @kaimatsu
+                  @aminomarketshop
                 </a>
               </li>
               <li>
@@ -550,12 +550,12 @@ export function FAQ() {
           </a>
           , Telegram{' '}
           <a
-            href="https://t.me/kaimatsu"
+            href="https://t.me/aminomarketshop"
             target="_blank"
             rel="noreferrer"
             className="text-ink-900 underline underline-offset-2 hover:text-accent-dark"
           >
-            @kaimatsu
+            @aminomarketshop
           </a>
           , or in our{' '}
           <a

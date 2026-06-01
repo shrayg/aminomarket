@@ -127,12 +127,12 @@ export function About() {
           </a>
           . You can also reach us on Telegram at{' '}
           <a
-            href="https://t.me/kaimatsu"
+            href="https://t.me/aminomarketshop"
             target="_blank"
             rel="noreferrer"
             className="text-ink-900 underline underline-offset-2 hover:text-accent-dark"
           >
-            @kaimatsu
+            @aminomarketshop
           </a>{' '}
           or join the community on{' '}
           <a
