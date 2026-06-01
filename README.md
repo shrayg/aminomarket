@@ -1,36 +1,40 @@
 # Aminomarket
 
-Full-stack e-commerce: **Vite + React + Tailwind** frontend + **Node.js/Express** backend.
+Full-stack e-commerce: **Vite + React + Tailwind** frontend and **Node.js/Express** backend.
 
-## Deploy to Vercel
+## Deploy To Vercel
 
-1. **Push to GitHub** and import the repo in [Vercel](https://vercel.com).
+1. Push to GitHub and import the repo in [Vercel](https://vercel.com).
 
-2. **Add environment variables** in Vercel project settings:
-   - `ADMIN_PASSWORD` - dashboard password; change before any deployment
+2. Add environment variables in Vercel project settings:
+   - `ADMIN_PASSWORD` - dashboard password; change before the public launch
    - `ADMIN_JWT_SECRET` - separate random signing secret for admin sessions
-   - `DATABASE_URL` – PostgreSQL connection string (use [Neon](https://neon.tech) free tier or Vercel Postgres)
-   - `JWT_SECRET` – random string for auth
-   - `FRONTEND_URL` – `https://aminomarket.shop` (or your Vercel URL)
-   - `STRIPE_SECRET_KEY` – server-side Stripe key for Checkout Sessions
-   - `STRIPE_WEBHOOK_SECRET` – signing secret for `https://aminomarket.shop/api/stripe/webhook`
+   - `SUPABASE_URL` - Supabase project URL
+   - `SUPABASE_ANON_KEY` - Supabase publishable legacy anon key
+   - `SUPABASE_SERVICE_ROLE_KEY` - Supabase server-only service-role key
+   - `JWT_SECRET` - random string for customer auth
+   - `FRONTEND_URL` - `https://aminomarket.shop`
+   - `STRIPE_SECRET_KEY` - server-side Stripe key for Checkout Sessions
+   - `STRIPE_WEBHOOK_SECRET` - signing secret for `https://aminomarket.shop/api/stripe/webhook`
 
-3. **Deploy** – Vercel will build the frontend and deploy the API as serverless functions.
+3. Link and apply the tracked Supabase migration once:
 
-4. **Seed the database** (first time):
    ```bash
-   DATABASE_URL="your-postgres-url" npx prisma db push --schema=server/prisma/schema.prisma
-   DATABASE_URL="your-postgres-url" node server/prisma/seed.js
+   npx supabase login
+   npx supabase link --project-ref your-project-ref
+   npm run db:push
    ```
 
-## Local development
+4. Deploy. Vercel builds the frontend and deploys the Express API as serverless functions.
 
-### 1. Database
+## Local Development
 
-Use PostgreSQL (Neon free tier, Docker, or local). Add the variables to the root `.env`:
+Add the variables to the root `.env`:
 
-```
-DATABASE_URL="postgresql://user:pass@host:5432/db?sslmode=require"
+```dotenv
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 JWT_SECRET=dev-secret
 ADMIN_PASSWORD=kaimatsu
 ADMIN_JWT_SECRET=dev-admin-secret
@@ -39,17 +43,17 @@ STRIPE_SECRET_KEY=sk_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 ```
 
-### 2. Backend
+Keep `SUPABASE_SERVICE_ROLE_KEY` on the server only. Never expose it through a `VITE_` variable.
+
+Start the backend:
 
 ```bash
 cd server
 npm install
-npx prisma db push
-npm run db:seed
 npm run dev
 ```
 
-### 3. Frontend
+Start the frontend in another terminal:
 
 ```bash
 npm install
@@ -58,13 +62,13 @@ npm run dev
 
 Open http://localhost:5173. The Vite dev server proxies `/api` to the backend.
 
-The internal dashboard is available at http://localhost:5173/admin. The development
-fallback password is `kaimatsu`; production intentionally requires `ADMIN_PASSWORD`.
+The internal dashboard is available at http://localhost:5173/admin. The development fallback
+password is `kaimatsu`; production intentionally requires `ADMIN_PASSWORD`.
 
 ## Stack
 
 **Frontend:** Vite, React 18, React Router, Tailwind CSS, Zustand  
-**Backend:** Express, Prisma (PostgreSQL), JWT auth, Stripe (optional)
+**Backend:** Express, Supabase PostgreSQL, JWT auth, Stripe
 
 ## Scripts
 
@@ -72,8 +76,8 @@ fallback password is `kaimatsu`; production intentionally requires `ADMIN_PASSWO
 |---------|-------------|
 | `npm run dev` | Start frontend |
 | `npm run server` | Start backend |
-| `npm run build` | Build for production (Vercel) |
-| `npm run db:push` | Provision or update PostgreSQL tables for analytics and fulfillment |
-| `npm run vercel-build` | Apply tracked Prisma migrations and create the Vercel production bundle |
+| `npm run build` | Build for production |
+| `npm run db:push` | Apply tracked SQL migrations to the linked Supabase project |
+| `npm run vercel-build` | Create the Vercel production bundle |
 | `npm run stripe:sync -- --apply --confirm-stripe-approval` | Create or update the Stripe Product and Price catalog from `catalog/products.json` |
 | `npm run stripe:webhook -- --apply --confirm-stripe-approval` | Register the production Stripe webhook and save its signing secret locally |

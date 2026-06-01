@@ -1,8 +1,7 @@
 import { Router } from 'express'
-import { PrismaClient } from '@prisma/client'
+import { getSupabase, throwIfSupabaseError } from '../lib/supabase.js'
 
 const router = Router()
-const prisma = new PrismaClient()
 
 router.post('/', async (req, res) => {
   try {
@@ -11,11 +10,10 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Email required' })
     }
 
-    await prisma.newsletterSubscriber.upsert({
-      where: { email: email.trim().toLowerCase() },
-      update: {},
-      create: { email: email.trim().toLowerCase() },
-    })
+    const { error } = await getSupabase()
+      .from('newsletter_subscribers')
+      .upsert({ email: email.trim().toLowerCase() }, { onConflict: 'email', ignoreDuplicates: true })
+    throwIfSupabaseError(error)
 
     res.json({ success: true })
   } catch (err) {

@@ -1,0 +1,1 @@
+-- Production catalog data is maintained in catalog/products.json and Stripe.

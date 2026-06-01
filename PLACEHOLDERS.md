@@ -6,7 +6,9 @@ Fill in each item and mark when done. Use this as a reference when sending conte
 
 ## 1. Environment Variables (Vercel / `.env`)
 
-- [ ] `DATABASE_URL` — PostgreSQL connection string (e.g. Neon, Vercel Postgres)
+- [ ] `SUPABASE_URL` - Supabase project URL
+- [ ] `SUPABASE_ANON_KEY` - Supabase publishable anon key
+- [ ] `SUPABASE_SERVICE_ROLE_KEY` - Supabase server-only key; never expose in browser code
 - [ ] `JWT_SECRET` — Random secret string for auth (generate with `openssl rand -hex 32`)
 - [ ] `FRONTEND_URL` — Production URL, e.g. `https://aminomarket.shop`
 - [ ] `STRIPE_SECRET_KEY` — From Stripe Dashboard → Developers → API keys
@@ -97,7 +99,7 @@ Phone:
 Hours: 
 
 Stripe keys: (add when ready)
-DATABASE_URL: 
+SUPABASE_URL:
 JWT_SECRET: 
 FRONTEND_URL: 
 ```

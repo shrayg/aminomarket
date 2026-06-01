@@ -1,11 +1,10 @@
-import { PrismaClient } from '@prisma/client'
 import { randomUUID } from 'node:crypto'
+import { getSupabase, isSupabaseConfigured, throwIfSupabaseError } from '../lib/supabase.js'
 
-const prisma = new PrismaClient()
 const memoryEvents = []
 const memorySessions = new Map()
 const memoryFulfillments = new Map()
-let databaseAvailable = true
+let databaseAvailable = isSupabaseConfigured
 let databaseWarningLogged = false
 
 const MAX_MEMORY_EVENTS = 10000
@@ -33,9 +32,12 @@ async function withFallback(databaseOperation, fallbackOperation) {
       databaseAvailable = false
       if (!databaseWarningLogged) {
         databaseWarningLogged = true
-        console.warn(`[analytics] database unavailable; using non-persistent memory fallback: ${error.message}`)
+        console.warn(`[analytics] Supabase unavailable; using non-persistent memory fallback: ${error.message}`)
       }
     }
+  } else if (!databaseWarningLogged) {
+    databaseWarningLogged = true
+    console.warn('[analytics] Supabase is not configured; using non-persistent memory fallback.')
   }
   return fallbackOperation()
 }
@@ -76,6 +78,51 @@ function recordMemoryEvent(event) {
   }
 }
 
+function mapSession(row) {
+  return {
+    id: row.id,
+    visitorId: row.visitor_id,
+    entryPath: row.entry_path,
+    source: row.source,
+    referrer: row.referrer,
+    startedAt: new Date(row.started_at),
+    lastSeenAt: new Date(row.last_seen_at),
+    durationSeconds: row.duration_seconds,
+    engaged: row.engaged,
+    pageViews: row.page_views,
+    checkoutStarted: row.checkout_started,
+    converted: row.converted,
+  }
+}
+
+function mapEvent(row) {
+  return {
+    id: row.id,
+    sessionId: row.session_id,
+    visitorId: row.visitor_id,
+    type: row.type,
+    path: row.path,
+    productSlug: row.product_slug,
+    query: row.query,
+    source: row.source,
+    referrer: row.referrer,
+    value: row.value,
+    durationSeconds: row.duration_seconds,
+    metadata: row.metadata,
+    createdAt: new Date(row.created_at),
+  }
+}
+
+function mapFulfillment(row) {
+  return {
+    stripeSessionId: row.stripe_session_id,
+    status: row.status,
+    trackingNumber: row.tracking_number,
+    note: row.note,
+    updatedAt: new Date(row.updated_at),
+  }
+}
+
 export async function recordAnalyticsEvent(input) {
   const event = {
     sessionId: String(input.sessionId),
@@ -93,33 +140,20 @@ export async function recordAnalyticsEvent(input) {
 
   return withFallback(
     async () => {
-      const sessionUpdate = {
-        lastSeenAt: new Date(),
-        durationSeconds: { set: event.durationSeconds },
-        engaged: event.durationSeconds >= 5,
-      }
-      if (event.type === 'page_view') sessionUpdate.pageViews = { increment: 1 }
-      if (event.type === 'checkout_started') sessionUpdate.checkoutStarted = true
-      if (event.type === 'purchase_return') sessionUpdate.converted = true
-
-      await prisma.analyticsSession.upsert({
-        where: { id: event.sessionId },
-        create: {
-          id: event.sessionId,
-          visitorId: event.visitorId,
-          entryPath: event.path || '/',
-          source: event.source || 'direct',
-          referrer: event.referrer,
-          lastSeenAt: new Date(),
-          durationSeconds: event.durationSeconds,
-          engaged: event.durationSeconds >= 5,
-          pageViews: event.type === 'page_view' ? 1 : 0,
-          checkoutStarted: event.type === 'checkout_started',
-          converted: event.type === 'purchase_return',
-        },
-        update: sessionUpdate,
+      const { error } = await getSupabase().rpc('record_analytics_event', {
+        p_duration_seconds: event.durationSeconds,
+        p_metadata: event.metadata,
+        p_path: event.path,
+        p_product_slug: event.productSlug,
+        p_query: event.query,
+        p_referrer: event.referrer,
+        p_session_id: event.sessionId,
+        p_source: event.source,
+        p_type: event.type,
+        p_value: event.value,
+        p_visitor_id: event.visitorId,
       })
-      await prisma.analyticsEvent.create({ data: event })
+      throwIfSupabaseError(error)
     },
     () => recordMemoryEvent(event)
   )
@@ -128,11 +162,13 @@ export async function recordAnalyticsEvent(input) {
 export async function markAnalyticsConversion(sessionId) {
   if (!sessionId) return
   return withFallback(
-    () =>
-      prisma.analyticsSession.updateMany({
-        where: { id: String(sessionId) },
-        data: { converted: true, lastSeenAt: new Date() },
-      }),
+    async () => {
+      const { error } = await getSupabase()
+        .from('analytics_sessions')
+        .update({ converted: true, last_seen_at: new Date().toISOString() })
+        .eq('id', String(sessionId))
+      throwIfSupabaseError(error)
+    },
     () => {
       const session = memorySessions.get(String(sessionId))
       if (session) session.converted = true
@@ -143,19 +179,20 @@ export async function markAnalyticsConversion(sessionId) {
 export async function listAnalytics(days = 30) {
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
   return withFallback(
-    async () => ({
-      sessions: await prisma.analyticsSession.findMany({
-        where: { startedAt: { gte: since } },
-        orderBy: { startedAt: 'desc' },
-        take: 10000,
-      }),
-      events: await prisma.analyticsEvent.findMany({
-        where: { createdAt: { gte: since } },
-        orderBy: { createdAt: 'desc' },
-        take: 20000,
-      }),
-      storageMode: 'database',
-    }),
+    async () => {
+      const db = getSupabase()
+      const [sessionsResult, eventsResult] = await Promise.all([
+        db.from('analytics_sessions').select('*').gte('started_at', since.toISOString()).order('started_at', { ascending: false }).limit(10000),
+        db.from('analytics_events').select('*').gte('created_at', since.toISOString()).order('created_at', { ascending: false }).limit(20000),
+      ])
+      throwIfSupabaseError(sessionsResult.error)
+      throwIfSupabaseError(eventsResult.error)
+      return {
+        sessions: sessionsResult.data.map(mapSession),
+        events: eventsResult.data.map(mapEvent),
+        storageMode: 'database',
+      }
+    },
     () => ({
       sessions: [...memorySessions.values()].filter((session) => session.startedAt >= since),
       events: memoryEvents.filter((event) => event.createdAt >= since),
@@ -166,7 +203,11 @@ export async function listAnalytics(days = 30) {
 
 export async function listFulfillments() {
   return withFallback(
-    () => prisma.fulfillmentRecord.findMany(),
+    async () => {
+      const { data, error } = await getSupabase().from('fulfillment_records').select('*')
+      throwIfSupabaseError(error)
+      return data.map(mapFulfillment)
+    },
     () => [...memoryFulfillments.values()]
   )
 }
@@ -180,12 +221,21 @@ export async function saveFulfillment(stripeSessionId, data) {
     updatedAt: new Date(),
   }
   return withFallback(
-    () =>
-      prisma.fulfillmentRecord.upsert({
-        where: { stripeSessionId: record.stripeSessionId },
-        create: record,
-        update: record,
-      }),
+    async () => {
+      const { data: saved, error } = await getSupabase()
+        .from('fulfillment_records')
+        .upsert({
+          stripe_session_id: record.stripeSessionId,
+          status: record.status,
+          tracking_number: record.trackingNumber,
+          note: record.note,
+          updated_at: record.updatedAt.toISOString(),
+        }, { onConflict: 'stripe_session_id' })
+        .select('*')
+        .single()
+      throwIfSupabaseError(error)
+      return mapFulfillment(saved)
+    },
     () => {
       memoryFulfillments.set(record.stripeSessionId, record)
       return record
@@ -195,12 +245,20 @@ export async function saveFulfillment(stripeSessionId, data) {
 
 export async function listRegisteredUsers() {
   return withFallback(
-    () =>
-      prisma.user.findMany({
-        select: { id: true, email: true, name: true, createdAt: true },
-        orderBy: { createdAt: 'desc' },
-        take: 500,
-      }),
+    async () => {
+      const { data, error } = await getSupabase()
+        .from('app_users')
+        .select('id, email, name, created_at')
+        .order('created_at', { ascending: false })
+        .limit(500)
+      throwIfSupabaseError(error)
+      return data.map((user) => ({
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        createdAt: new Date(user.created_at),
+      }))
+    },
     () => []
   )
 }
