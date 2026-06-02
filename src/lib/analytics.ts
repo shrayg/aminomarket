@@ -95,7 +95,11 @@ function createBody(type: AnalyticsEventType, payload: AnalyticsPayload = {}) {
 
 export function trackEvent(type: AnalyticsEventType, payload: AnalyticsPayload = {}) {
   if (!hasAnalyticsConsent() || window.location.pathname.startsWith('/admin')) return
-  const signature = JSON.stringify([type, payload.productSlug, payload.query, payload.metadata])
+  // `path` MUST be in the dedupe key. Without it, fast multi-page navigation
+  // (e.g. Home -> Shop -> Product within ~1s) collapsed all those page_view
+  // events into one because they all shared signature ["page_view", null, null, null].
+  const path = payload.path || `${window.location.pathname}${window.location.search}`
+  const signature = JSON.stringify([type, path, payload.productSlug, payload.query, payload.metadata])
   const now = Date.now()
   if (now - (recentEvents.get(signature) || 0) < 1000) return
   recentEvents.set(signature, now)

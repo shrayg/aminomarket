@@ -5,9 +5,16 @@ const memoryEvents = []
 const memorySessions = new Map()
 const memoryFulfillments = new Map()
 let databaseAvailable = isSupabaseConfigured
+let databaseDemotedAt = 0
 let databaseWarningLogged = false
 
 const MAX_MEMORY_EVENTS = 10000
+// After a Supabase error, fall back to memory but retry the database again
+// after this window. Without this, a single transient blip pinned the entire
+// warm Vercel function instance into the non-persistent memory path until it
+// cold-started — meaning the dashboard could quietly read empty data even
+// though Supabase had already recovered.
+const DB_RETRY_AFTER_MS = 60_000
 
 function clampDuration(value) {
   const duration = Number(value)
@@ -25,14 +32,28 @@ function cleanMetadata(metadata) {
 }
 
 async function withFallback(databaseOperation, fallbackOperation) {
+  if (
+    !databaseAvailable &&
+    isSupabaseConfigured &&
+    Date.now() - databaseDemotedAt > DB_RETRY_AFTER_MS
+  ) {
+    databaseAvailable = true
+    databaseWarningLogged = false
+  }
+
   if (databaseAvailable) {
     try {
       return await databaseOperation()
     } catch (error) {
       databaseAvailable = false
+      databaseDemotedAt = Date.now()
       if (!databaseWarningLogged) {
         databaseWarningLogged = true
-        console.warn(`[analytics] Supabase unavailable; using non-persistent memory fallback: ${error.message}`)
+        console.warn(
+          `[analytics] Supabase unavailable; using memory fallback for ${
+            DB_RETRY_AFTER_MS / 1000
+          }s: ${error.message}`
+        )
       }
     }
   } else if (!databaseWarningLogged) {

@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import { FlaskConical } from 'lucide-react'
 import { useProduct } from '@/hooks/useProducts'
 import { AddToCartButton } from '@/components/AddToCartButton'
-import { trackEvent } from '@/lib/analytics'
+import { hasAnalyticsConsent, trackEvent } from '@/lib/analytics'
 
 export function Product() {
   const { slug } = useParams()
@@ -20,10 +20,20 @@ export function Product() {
   }, [product, selectedVariantId])
 
   useEffect(() => {
-    if (product && trackedProductSlug.current !== product.slug) {
+    function fire() {
+      if (!product) return
+      if (!hasAnalyticsConsent()) return
+      if (trackedProductSlug.current === product.slug) return
       trackedProductSlug.current = product.slug
       trackEvent('product_view', { productSlug: product.slug })
     }
+    fire()
+    // Without this, a user who lands directly on a product page and accepts
+    // the age gate AFTER mount never gets their product_view recorded — the
+    // first effect run was no-op'd by the consent gate and the ref protected
+    // re-fires once consent flipped on.
+    window.addEventListener('amp-consent', fire)
+    return () => window.removeEventListener('amp-consent', fire)
   }, [product])
 
   if (loading) {
