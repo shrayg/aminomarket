@@ -1,18 +1,10 @@
 import crypto from 'node:crypto'
 
 // 62-char URL-safe alphanumeric. Slight modulo bias is acceptable for a
-// 12-char display code that rotates each day.
+// 12-char display code that rotates each hour.
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
 const CODE_LENGTH = 12
-const DAY_MS = 24 * 60 * 60 * 1000
-
-// The Vercel Hobby plan only allows daily cron jobs, so we rotate the access
-// code once per day instead of once per hour. We align the bucket boundary to
-// 12:00 UTC so the boundary lines up with the configured cron schedule
-// ("0 12 * * *" in vercel.json) - the daily broadcast goes out right when the
-// new bucket starts, giving operators a full 24h window.
-const BUCKET_BOUNDARY_HOUR_UTC = 12
-const BUCKET_OFFSET_MS = BUCKET_BOUNDARY_HOUR_UTC * 60 * 60 * 1000
+const HOUR_MS = 60 * 60 * 1000
 
 function getSecret() {
   return (
@@ -23,15 +15,15 @@ function getSecret() {
   )
 }
 
-export function dayBucket(date = new Date()) {
-  return Math.floor((date.getTime() - BUCKET_OFFSET_MS) / DAY_MS)
+export function hourBucket(date = new Date()) {
+  return Math.floor(date.getTime() / HOUR_MS)
 }
 
-// Back-compat: older imports still reference hourBucket.
-export const hourBucket = dayBucket
+// Back-compat aliases so older imports (dayBucket) still resolve.
+export const dayBucket = hourBucket
 
 export function getCurrentAccessCode(date = new Date()) {
-  const bucket = dayBucket(date)
+  const bucket = hourBucket(date)
   const hmac = crypto
     .createHmac('sha256', getSecret())
     .update(`amp-admin-code:${bucket}`)
@@ -42,11 +34,12 @@ export function getCurrentAccessCode(date = new Date()) {
     code += ALPHABET[hmac[i] % ALPHABET.length]
   }
 
-  const validFrom = new Date(bucket * DAY_MS + BUCKET_OFFSET_MS)
-  const validTo = new Date((bucket + 1) * DAY_MS + BUCKET_OFFSET_MS)
+  const validFrom = new Date(bucket * HOUR_MS)
+  const validTo = new Date((bucket + 1) * HOUR_MS)
   return {
     code,
     bucket,
+    hourBucket: bucket,
     validFrom: validFrom.toISOString(),
     validTo: validTo.toISOString(),
     expiresInSeconds: Math.max(0, Math.round((validTo.getTime() - date.getTime()) / 1000)),
@@ -67,13 +60,13 @@ export async function postCodeToDiscord(codeInfo) {
     username: 'aminomarket admin',
     embeds: [
       {
-        title: 'Daily admin access code',
+        title: 'Hourly admin access code',
         description: `\`\`\`\n${codeInfo.code}\n\`\`\``,
         color: 0xc9a227,
         fields: [
           {
             name: 'Valid until',
-            value: `<t:${expireUnix}:F> (<t:${expireUnix}:R>)`,
+            value: `<t:${expireUnix}:t> (<t:${expireUnix}:R>)`,
             inline: false,
           },
         ],

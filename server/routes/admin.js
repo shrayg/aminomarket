@@ -483,7 +483,8 @@ router.get('/code', requireAdmin, (_req, res) => {
   res.json(getCurrentAccessCode())
 })
 
-// Vercel Cron hits this daily via GET; admin UI can also trigger via POST.
+// Hit by an external hourly cron (Supabase pg_cron) authenticated with
+// CRON_SECRET via the Authorization header. There is no UI trigger anymore.
 async function notifyHandler(_req, res) {
   const codeInfo = getCurrentAccessCode()
   const delivery = await postCodeToDiscord(codeInfo)

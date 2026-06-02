@@ -546,8 +546,6 @@ function RotatingCodeCard({ token }: { token: string }) {
   const [data, setData] = useState<RotatingCode | null>(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [sending, setSending] = useState(false)
-  const [sendResult, setSendResult] = useState<string>('')
   const [copied, setCopied] = useState(false)
   const [now, setNow] = useState(Date.now())
 
@@ -597,26 +595,6 @@ function RotatingCodeCard({ token }: { token: string }) {
     }
   }
 
-  async function sendToDiscord() {
-    setSending(true)
-    setSendResult('')
-    try {
-      const res = await adminFetch(token, '/api/admin/code/notify', { method: 'POST' })
-      const body = await res.json()
-      if (!res.ok) throw new Error(body.error || 'Discord delivery failed.')
-      setSendResult(
-        body.delivery?.sent
-          ? 'Sent to Discord.'
-          : `Not sent: ${body.delivery?.reason || 'unknown reason'}`
-      )
-    } catch (err) {
-      setSendResult(err instanceof Error ? err.message : 'Discord delivery failed.')
-    } finally {
-      setSending(false)
-      setTimeout(() => setSendResult(''), 6000)
-    }
-  }
-
   return (
     <section className="border border-ink-900 bg-ink-950 p-5 text-white shadow-xl">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -625,30 +603,19 @@ function RotatingCodeCard({ token }: { token: string }) {
             <KeyRound className="h-5 w-5 text-accent-light" />
           </div>
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-accent-light">Daily access code</p>
-            <h2 className="mt-1 text-base font-bold">Rotates daily, broadcast to the ops channel</h2>
+            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-accent-light">Hourly access code</p>
+            <h2 className="mt-1 text-base font-bold">Rotates hourly, auto-broadcast to the ops channel</h2>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => void load()}
-            disabled={loading}
-            className="flex items-center gap-2 border border-white/20 bg-white/5 px-3 py-2 text-xs font-bold uppercase tracking-wider text-white/80 transition hover:border-white/40 hover:text-white disabled:opacity-50"
-          >
-            <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
-          </button>
-          <button
-            type="button"
-            onClick={() => void sendToDiscord()}
-            disabled={sending || !data}
-            className="flex items-center gap-2 border border-accent-light bg-accent-light px-3 py-2 text-xs font-bold uppercase tracking-wider text-ink-950 transition hover:opacity-90 disabled:opacity-50"
-          >
-            <Send className={`h-3.5 w-3.5 ${sending ? 'animate-pulse' : ''}`} />
-            {sending ? 'Sending...' : 'Send to Discord'}
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => void load()}
+          disabled={loading}
+          className="flex items-center gap-2 border border-white/20 bg-white/5 px-3 py-2 text-xs font-bold uppercase tracking-wider text-white/80 transition hover:border-white/40 hover:text-white disabled:opacity-50"
+        >
+          <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
+          Refresh
+        </button>
       </div>
 
       <div className="mt-5 grid gap-4 lg:grid-cols-[1fr,auto] lg:items-center">
@@ -684,7 +651,6 @@ function RotatingCodeCard({ token }: { token: string }) {
       </div>
 
       {error && <p className="mt-3 text-xs text-rose-300">{error}</p>}
-      {sendResult && <p className="mt-3 text-xs text-white/70">{sendResult}</p>}
     </section>
   )
 }
@@ -1569,12 +1535,12 @@ function AdminLogin({ onLogin }: { onLogin: (password: string) => Promise<void> 
         </p>
         <h1 className="mt-2 text-2xl font-bold text-ink-900">Admin dashboard</h1>
         <p className="mt-2 text-sm leading-relaxed text-ink-500">
-          Sign in with the current daily access code from the ops channel. The code rotates once
-          per day and your session ends the moment it expires.
+          Sign in with the current hourly access code from the ops channel. The code rotates every
+          hour and your session ends the moment it expires.
         </p>
         <label className="mt-6 block">
           <span className="text-xs font-bold uppercase tracking-wider text-ink-500">
-            Daily access code
+            Hourly access code
           </span>
           <input
             type="password"
@@ -1626,7 +1592,7 @@ export function Admin() {
   useEffect(() => {
     function onForce() {
       logout()
-      setError('Your session ended because the access code rotated. Sign in with the new daily code.')
+      setError('Your session ended because the access code rotated. Sign in with the new hourly code.')
     }
     window.addEventListener(ADMIN_LOGOUT_EVENT, onForce)
     return () => window.removeEventListener(ADMIN_LOGOUT_EVENT, onForce)
@@ -1641,7 +1607,7 @@ export function Admin() {
     if (!expMs) return
     const fire = () => {
       logout()
-      setError('Your session expired. Sign in with the latest daily access code.')
+      setError('Your session expired. Sign in with the latest hourly access code.')
     }
     const msLeft = expMs - Date.now()
     if (msLeft <= 0) {
