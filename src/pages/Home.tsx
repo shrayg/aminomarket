@@ -61,12 +61,6 @@ export function Home() {
               >
                 Shop Peptides
               </Link>
-              <Link
-                to="/pre-sale"
-                className="inline-flex items-center border-2 border-white/30 px-8 py-3.5 font-semibold transition hover:border-white/60"
-              >
-                Pre-Sale
-              </Link>
             </div>
           </div>
           <div className="relative min-h-[420px]">
@@ -87,7 +81,7 @@ export function Home() {
       </section>
 
       {/* Featured - asymmetric grid */}
-      <section className="px-6 py-24">
+      <section className="px-6 py-16">
         <div className="mx-auto max-w-7xl">
           <div className="mb-16">
             <p className="font-sans text-xs font-medium uppercase tracking-[0.2em] text-ink-400">
@@ -110,7 +104,7 @@ export function Home() {
       </section>
 
       {/* Best Sellers */}
-      <section className="border-t border-ink-200 bg-ink-50/50 px-6 py-24">
+      <section className="border-t border-ink-200 bg-ink-50/50 px-6 py-16">
         <div className="mx-auto max-w-7xl">
           <div className="mb-12 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
@@ -137,7 +131,7 @@ export function Home() {
       </section>
 
       {/* Popular */}
-      <section className="px-6 py-24">
+      <section className="px-6 py-16">
         <div className="mx-auto max-w-7xl">
           <p className="font-sans text-xs font-medium uppercase tracking-[0.2em] text-ink-500">
             Trending Now
@@ -158,7 +152,7 @@ export function Home() {
       </section>
 
       {/* Categories - cleaner cards */}
-      <section className="border-t border-ink-200 bg-ink-50/50 px-6 py-24">
+      <section className="border-t border-ink-200 bg-ink-50/50 px-6 py-16">
         <div className="mx-auto max-w-7xl">
           <h2 className="font-sans text-display-sm font-bold tracking-tight text-ink-900">
             Shop Categories
@@ -186,7 +180,7 @@ export function Home() {
       </section>
 
       {/* Why Aminomarket */}
-      <section className="px-6 py-24">
+      <section className="px-6 py-16">
         <div className="mx-auto max-w-7xl">
           <h2 className="font-sans text-display-sm font-bold tracking-tight text-ink-900">
             Industry-Leading Quality
@@ -212,7 +206,7 @@ export function Home() {
       </section>
 
       {/* Testimonials - editorial, no stars */}
-      <section className="relative bg-ink-950 px-6 py-24 text-white">
+      <section className="relative bg-ink-950 px-6 py-16 text-white">
         <div className="noise absolute inset-0 pointer-events-none" />
         <div className="relative mx-auto max-w-7xl">
           <p className="font-sans text-xs font-medium uppercase tracking-[0.2em] text-ink-500">
@@ -240,7 +234,7 @@ export function Home() {
       </section>
 
       {/* FAQs */}
-      <section className="border-t border-ink-200 px-6 py-24">
+      <section className="border-t border-ink-200 px-6 py-16">
         <div className="mx-auto max-w-2xl">
           <h2 className="font-sans text-display-sm font-bold tracking-tight text-ink-900">
             FAQs
@@ -264,7 +258,7 @@ export function Home() {
       </section>
 
       {/* Newsletter */}
-      <section className="relative bg-ink-950 px-6 py-24 text-white">
+      <section className="relative bg-ink-950 px-6 py-16 text-white">
         <div className="noise absolute inset-0 pointer-events-none" />
         <div className="relative mx-auto max-w-xl text-center">
           <h2 className="font-sans text-2xl font-bold tracking-tight text-white">
