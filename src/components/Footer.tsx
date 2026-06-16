@@ -112,7 +112,7 @@ export function Footer() {
             for human or animal consumption. Not evaluated by the FDA.
           </p>
           <p className="mt-4 text-xs text-ink-500">
-            © {new Date().getFullYear()} Percival LLC, d/b/a Amino Market. All rights reserved.
+            © {new Date().getFullYear()} Amino Market. All rights reserved.
           </p>
         </div>
       </div>

@@ -19,10 +19,21 @@ These are owner-set policies. Do not contradict or "soften" them on your own.
 - We are NOT a compounding pharmacy (FDCA §503A) and NOT an outsourcing
   facility (§503B). Make that explicit when writing legal copy.
 - Every customer-facing copy change must preserve the RUO framing.
-- The post-sale disclaimer: we cannot ultimately control what customers do
-  with the product after purchase, but they agreed at checkout to use it
-  only for in-vitro laboratory research. Any deviation is the customer's
-  responsibility, not Percival LLC's.
+
+## Storefront status: NOT CURRENTLY ACCEPTING ORDERS
+
+- The site is currently a **research catalog only**. The checkout form,
+  Stripe integration, and shipping calculator are intentionally disabled.
+- Do NOT re-enable Add-to-Cart, the Cart page, the Checkout page, or the
+  `/api/checkout` and `/api/checkout/quote` server routes without explicit
+  owner approval.
+- Do NOT add a new payment processor, replace Stripe, or add a "buy now"
+  link of any kind without explicit owner approval.
+- The cart icon has been removed from the header. Do not reintroduce it.
+- It is fine to keep the catalog (Shop, Product pages, COA), the account
+  pages, and the existing policy pages so a future re-enable is a small
+  diff &mdash; but every customer-facing surface must make clear the site
+  is not currently selling.
 
 ## Contact info (the only correct values)
 
@@ -40,8 +51,8 @@ These are owner-set policies. Do not contradict or "soften" them on your own.
 
 The site exposes **no physical address and no phone number**. Support
 response window is "24&ndash;48 hours" everywhere it's mentioned. For
-service of process, customers are routed to email or to the Commonwealth
-of Virginia LLC registration portal — we do not list a mailing address.
+legal notices, customers are routed to the support email &mdash; we do
+not list a mailing address and we do not name a legal entity.
 
 ## Returns / refunds
 
@@ -94,27 +105,20 @@ of Virginia LLC registration portal — we do not list a mailing address.
 - If a delay pushes outside the 1–2 week window, the customer is emailed.
 - No insurance and no signature required on shipments.
 
-## Legal entity & governing law
+## Legal entity
 
-- Legal entity: **Percival LLC** (a Virginia limited liability company).
-- Brand / trade name used in marketing copy: **Amino Market**.
-- In legal copy (Terms, Privacy, refund records, copyright line) use
-  `Percival LLC, d/b/a Amino Market` &mdash; in marketing/storefront copy
-  the brand alone ("Amino Market") is fine.
-- Governing law / venue for the Terms of Service: **Commonwealth of
-  Virginia** (any state or federal court located in Virginia).
-- The Terms include a **binding individual arbitration agreement and
-  class-action waiver** (Section 12), AAA Consumer Arbitration Rules,
-  with a 30-day opt-out and small-claims-court / injunctive-IP-relief
-  carve-outs. Do not remove or weaken this unless explicitly instructed.
-- Footer copyright line: `© <year> Percival LLC, d/b/a Amino Market.`
-
-## Sales tax
-
-- We do **not** currently use Stripe Tax or collect sales tax on the
-  storefront. The Terms state that sales/use/VAT/GST/customs duties are
-  the customer's responsibility unless we expressly collect them. Do not
-  add Stripe Tax integration code without explicit owner approval.
+- The site is **not** tied to a named legal entity in customer-facing
+  copy. Do **not** reintroduce "Percival LLC", "d/b/a Amino Market", a
+  Virginia LLC, an Arkansas LLC, or any other limited liability company
+  identifier in Terms, Privacy, the footer copyright, or anywhere else
+  on the storefront.
+- Brand identifier in all copy: **Amino Market** (no LLC suffix).
+- Footer copyright line: `© <year> Amino Market. All rights reserved.`
+- Because we do not name a legal entity, the Terms must NOT include a
+  governing-law clause, an arbitration agreement, a class-action waiver,
+  an LLC-specific indemnification, or a "service of process via the
+  Virginia LLC portal" line. Those clauses depended on Percival LLC and
+  must stay deleted unless an actual entity is later registered.
 
 ## Age gate
 

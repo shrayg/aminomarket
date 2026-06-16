@@ -301,16 +301,6 @@ const sections: FAQSection[] = [
           </>
         ),
       },
-      {
-        q: 'How do I use the Launch Week 20% Off promo?',
-        a: (
-          <>
-            The launch-week discount applies automatically at checkout. If
-            you don&apos;t see it reflected, refresh the cart or open a
-            support ticket and we&apos;ll sort it out.
-          </>
-        ),
-      },
     ],
   },
   {

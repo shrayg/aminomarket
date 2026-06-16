@@ -40,7 +40,7 @@ The rule is one-way: adding a service requires updating Privacy.
 Removing a service should also remove its sub-processor listing.
 
 If a campaign or integration is added without updating Privacy, the
-policy becomes materially false and exposes Percival LLC to consumer-
+policy becomes materially false and exposes the operator to consumer-
 protection claims. Do not skip this step.
 
 ## How to add a sub-processor entry

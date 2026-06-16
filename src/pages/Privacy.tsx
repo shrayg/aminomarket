@@ -10,25 +10,29 @@ export function Privacy() {
         How Amino Market handles the data you provide
       </p>
 
+      <p className="mt-8 rounded-xl border-l-2 border-accent-dark bg-accent-light/20 p-4 text-sm leading-relaxed text-ink-800">
+        <strong>Storefront status.</strong> Amino Market is currently a
+        research catalog only and is <strong>not accepting orders</strong>.
+        The checkout, payment, and shipping flows are disabled. The
+        sections below describe how account, contact, and analytics data
+        are handled while the catalog is open.
+      </p>
+
       <section className="mt-10">
         <h2 className="font-sans text-xl font-bold text-ink-900">
           Who we are
         </h2>
         <p className="mt-4 leading-relaxed text-ink-600">
-          The data controller for personal information collected through
-          aminomarket.shop is <strong>Percival LLC</strong>, a Virginia
-          limited liability company operating the storefront under the
-          trade name &ldquo;Amino Market.&rdquo; Privacy questions and data
-          requests can be sent to{' '}
+          &ldquo;Amino Market&rdquo; refers to the operator of
+          aminomarket.shop. Privacy questions and data requests can be
+          sent to{' '}
           <a
             href="mailto:aminomarketsupport@gmail.com"
             className="text-ink-900 underline underline-offset-2 hover:text-accent-dark"
           >
             aminomarketsupport@gmail.com
           </a>
-          . Legal notices and service of process should be sent to the same
-          address, or filed through the Commonwealth of Virginia&apos;s LLC
-          registration portal.
+          .
         </p>
       </section>
 
@@ -37,8 +41,8 @@ export function Privacy() {
           What we collect
         </h2>
         <p className="mt-4 leading-relaxed text-ink-600">
-          We collect only what is needed to operate the storefront, fulfill
-          orders, and respond to support requests:
+          We collect only what is needed to operate the catalog and respond
+          to support requests:
         </p>
         <ul className="mt-4 list-disc space-y-2 pl-5 leading-relaxed text-ink-600">
           <li>
@@ -48,77 +52,21 @@ export function Privacy() {
             plain-text password.
           </li>
           <li>
-            <strong>Order &amp; shipping data</strong> &mdash; recipient
-            name, shipping address, billing address, email, and order
-            history. Required to fulfill and deliver your order.
-          </li>
-          <li>
-            <strong>Payment data</strong> &mdash; collected and processed
-            by Stripe at checkout. We <strong>do not store full card
-            numbers or card security codes</strong> on our infrastructure.
-          </li>
-          <li>
-            <strong>Marketing preferences</strong> &mdash; whether you
-            opted in to receive email and/or SMS marketing about discounts,
-            promotions, and product launches at the time you created your
-            account.
-          </li>
-          <li>
             <strong>Support messages</strong> &mdash; the content of any
             message you send through the contact form, email, Telegram, or
             Discord.
           </li>
           <li>
             <strong>First-party usage data</strong> &mdash; pages visited,
-            session duration, product views, cart activity, and checkout
-            progression, used to understand catalog demand and to fix
-            navigation problems. We do not share this with advertising
-            networks.
+            session duration, and product views, used to understand
+            catalog interest and to fix navigation problems. We do not
+            share this with advertising networks.
           </li>
         </ul>
-      </section>
-
-      <section className="mt-10">
-        <h2 className="font-sans text-xl font-bold text-ink-900">
-          Marketing communications
-        </h2>
         <p className="mt-4 leading-relaxed text-ink-600">
-          When you create an account you can choose to receive notifications
-          about <strong>discounts, promotional offers, and product
-          launches</strong> by email and/or SMS text message. Opt-in
-          checkboxes appear on the account-creation form. You can change
-          your preferences at any time in your account settings or by
-          replying STOP to any SMS message (US carriers) or by clicking the
-          unsubscribe link in any marketing email.
-        </p>
-        <p className="mt-4 leading-relaxed text-ink-600">
-          Marketing messages are sent separately from transactional messages
-          (order confirmations, shipping notifications, support replies,
-          and account-security notices). You will continue to receive
-          transactional messages while you have an active order or account,
-          even if you have opted out of marketing.
-        </p>
-      </section>
-
-      <section className="mt-10">
-        <h2 className="font-sans text-xl font-bold text-ink-900">
-          Payment processing
-        </h2>
-        <p className="mt-4 leading-relaxed text-ink-600">
-          Payments are processed by <strong>Stripe</strong>. Stripe
-          Checkout collects the billing, shipping, and payment information
-          needed to authorize and capture an order. Stripe is the system of
-          record for the payment transaction itself. For Stripe&apos;s own
-          privacy practices, see{' '}
-          <a
-            href="https://stripe.com/privacy"
-            target="_blank"
-            rel="noreferrer"
-            className="text-ink-900 underline underline-offset-2 hover:text-accent-dark"
-          >
-            stripe.com/privacy
-          </a>
-          .
+          Because the storefront is not currently accepting orders, we are
+          not collecting shipping addresses, billing addresses, payment
+          information, or order history at this time.
         </p>
       </section>
 
@@ -129,28 +77,11 @@ export function Privacy() {
         <p className="mt-4 leading-relaxed text-ink-600">
           We use a minimal set of <strong>essential cookies and
           browser-storage values</strong> that are required for the site to
-          function:
-        </p>
-        <ul className="mt-4 list-disc space-y-2 pl-5 leading-relaxed text-ink-600">
-          <li>
-            Your <strong>session token</strong> when you are logged in to an
-            account.
-          </li>
-          <li>
-            Your <strong>shopping cart contents</strong> while you browse,
-            stored locally in your browser so the cart survives page
-            navigation.
-          </li>
-          <li>
-            Cookies set by <strong>Stripe</strong> on the checkout page for
-            fraud prevention.
-          </li>
-        </ul>
-        <p className="mt-4 leading-relaxed text-ink-600">
-          We do <strong>not</strong> set advertising cookies, retargeting
+          function: a session token when you are logged in, and a small
+          analytics identifier used for first-party catalog metrics. We do
+          <strong> not</strong> set advertising cookies, retargeting
           pixels, or third-party tracking pixels (Meta / TikTok / Google
-          Ads / etc.) on the storefront. Because we use only
-          strictly-necessary cookies, no cookie banner is displayed.
+          Ads / etc.).
         </p>
       </section>
 
@@ -160,22 +91,8 @@ export function Privacy() {
         </h2>
         <ul className="mt-4 list-disc space-y-2 pl-5 leading-relaxed text-ink-600">
           <li>To create and authenticate your account.</li>
-          <li>To process payment and fulfill the orders you place.</li>
-          <li>
-            To send order-status notifications (confirmation, shipping
-            notification, delay notification, delivery confirmation).
-          </li>
-          <li>To respond to support, refund, and account requests.</li>
-          <li>
-            To send marketing notifications about discounts, promotions,
-            and product launches &mdash; only if you opted in.
-          </li>
-          <li>To investigate fraud, chargebacks, and abuse of the site.</li>
-          <li>To improve the storefront based on aggregate usage patterns.</li>
-          <li>
-            To comply with tax, accounting, anti-money-laundering, and
-            other legal obligations.
-          </li>
+          <li>To respond to support and account requests.</li>
+          <li>To improve the catalog based on aggregate usage patterns.</li>
         </ul>
         <p className="mt-4 leading-relaxed text-ink-600">
           We do <strong>not</strong> sell your personal information and we
@@ -190,33 +107,24 @@ export function Privacy() {
           Who we share it with (sub-processors)
         </h2>
         <p className="mt-4 leading-relaxed text-ink-600">
-          We share the minimum data necessary with the following service
-          providers that operate the storefront on our behalf:
+          We share the minimum data necessary with the service providers
+          that operate the catalog on our behalf:
         </p>
         <ul className="mt-4 list-disc space-y-2 pl-5 leading-relaxed text-ink-600">
           <li>
-            <strong>Stripe</strong> &mdash; payment processing and fraud
-            screening for orders.
-          </li>
-          <li>
             <strong>Vercel</strong> &mdash; hosting and edge delivery of
-            the storefront.
+            the catalog.
           </li>
           <li>
-            <strong>Supabase</strong> &mdash; database for account,
-            order-fulfillment, and operational data.
-          </li>
-          <li>
-            <strong>USPS and UPS</strong> &mdash; the recipient name,
-            shipping address, and contact details required to deliver
-            your parcel.
+            <strong>Supabase</strong> &mdash; database for account and
+            operational data.
           </li>
         </ul>
         <p className="mt-4 leading-relaxed text-ink-600">
           We also disclose data when required by law, in response to a
           valid subpoena, court order, or government request, or when
-          necessary to protect the rights, safety, or property of Percival
-          LLC, our customers, or the public.
+          necessary to protect the rights, safety, or property of the
+          site, our users, or the public.
         </p>
       </section>
 
@@ -225,10 +133,8 @@ export function Privacy() {
           Where your data is stored
         </h2>
         <p className="mt-4 leading-relaxed text-ink-600">
-          Account, order, and operational data are stored in private
-          databases that we control. Payment data lives with Stripe.
-          Marketing-preference data lives alongside the account record.
-          All data is stored in the United States.
+          Account and operational data are stored in private databases
+          that we control. All data is stored in the United States.
         </p>
       </section>
 
@@ -237,12 +143,10 @@ export function Privacy() {
           Retention
         </h2>
         <p className="mt-4 leading-relaxed text-ink-600">
-          Order, payment, and tax records are retained for as long as
-          required by tax, accounting, and fraud-prevention obligations
-          (typically 7 years for transaction records). Account data is
-          retained for as long as the account remains active. Support
-          messages are retained for 24 months unless deletion is requested
-          earlier. Usage data is retained on a rolling 13-month basis.
+          Account data is retained for as long as the account remains
+          active. Support messages are retained for 24 months unless
+          deletion is requested earlier. Usage data is retained on a
+          rolling 13-month basis.
         </p>
       </section>
 
@@ -261,19 +165,11 @@ export function Privacy() {
             </a>{' '}
             from your account email to request a copy of, correction of,
             or deletion of the data we hold on you. We will respond
-            within 30 days. Some data (e.g. completed transaction records)
-            may be retained where law requires.
-          </li>
-          <li>
-            <strong>Marketing opt-out.</strong> Update marketing
-            preferences in your account settings, click unsubscribe in
-            any marketing email, or reply STOP to any SMS marketing
-            message.
+            within 30 days.
           </li>
           <li>
             <strong>Account closure.</strong> Email us with your account
-            email and we will close your account and delete its data,
-            subject to the retention exceptions above.
+            email and we will close your account and delete its data.
           </li>
         </ul>
       </section>
@@ -296,9 +192,7 @@ export function Privacy() {
         </h2>
         <p className="mt-4 leading-relaxed text-ink-600">
           We may update this policy from time to time. The version posted
-          here at the time you place an order is the version that applies
-          to that order. Material changes will be communicated by email to
-          active account holders.
+          here at the time you visit the site is the version that applies.
         </p>
       </section>
 
@@ -322,14 +216,6 @@ export function Privacy() {
         See also our{' '}
         <Link to="/terms" className="underline underline-offset-2 hover:text-ink-700">
           Terms of Service
-        </Link>
-        ,{' '}
-        <Link to="/returns" className="underline underline-offset-2 hover:text-ink-700">
-          Return &amp; Refund Policy
-        </Link>
-        , and{' '}
-        <Link to="/shipping" className="underline underline-offset-2 hover:text-ink-700">
-          Shipping &amp; Delivery Policy
         </Link>
         . Last updated{' '}
         {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}.

@@ -122,15 +122,14 @@ export function Contact() {
       </div>
 
       <p className="mt-8 text-sm text-ink-500">
-        Legal notices and service of process should be sent to{' '}
+        Legal notices should be sent to{' '}
         <a
           href="mailto:aminomarketsupport@gmail.com"
           className="text-ink-900 underline underline-offset-2 hover:text-accent-dark"
         >
           aminomarketsupport@gmail.com
-        </a>{' '}
-        for Percival LLC. We respond through the registration portal of the
-        Commonwealth of Virginia where applicable.
+        </a>
+        .
       </p>
 
       <div className="mt-12 border-t border-ink-200 pt-10">
