@@ -20,21 +20,6 @@ These are owner-set policies. Do not contradict or "soften" them on your own.
   facility (§503B). Make that explicit when writing legal copy.
 - Every customer-facing copy change must preserve the RUO framing.
 
-## Storefront status: NOT CURRENTLY ACCEPTING ORDERS
-
-- The site is currently a **research catalog only**. The checkout form,
-  Stripe integration, and shipping calculator are intentionally disabled.
-- Do NOT re-enable Add-to-Cart, the Cart page, the Checkout page, or the
-  `/api/checkout` and `/api/checkout/quote` server routes without explicit
-  owner approval.
-- Do NOT add a new payment processor, replace Stripe, or add a "buy now"
-  link of any kind without explicit owner approval.
-- The cart icon has been removed from the header. Do not reintroduce it.
-- It is fine to keep the catalog (Shop, Product pages, COA), the account
-  pages, and the existing policy pages so a future re-enable is a small
-  diff &mdash; but every customer-facing surface must make clear the site
-  is not currently selling.
-
 ## Contact info (the only correct values)
 
 | Channel  | Value                                              |
@@ -117,8 +102,15 @@ not list a mailing address and we do not name a legal entity.
 - Because we do not name a legal entity, the Terms must NOT include a
   governing-law clause, an arbitration agreement, a class-action waiver,
   an LLC-specific indemnification, or a "service of process via the
-  Virginia LLC portal" line. Those clauses depended on Percival LLC and
-  must stay deleted unless an actual entity is later registered.
+  Virginia LLC portal" line. Those clauses depended on a named legal
+  entity and must stay deleted unless an actual entity is later registered.
+
+## Sales tax
+
+- We do **not** currently use Stripe Tax or collect sales tax on the
+  storefront. The Terms state that sales/use/VAT/GST/customs duties are
+  the customer's responsibility unless we expressly collect them. Do not
+  add Stripe Tax integration code without explicit owner approval.
 
 ## Age gate
 

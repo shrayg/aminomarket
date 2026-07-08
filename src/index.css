@@ -8,11 +8,9 @@
     overflow-x: hidden;
   }
   body {
-    @apply bg-white;
-    overflow: hidden;
-  }
-  #root {
-    @apply min-h-screen bg-white;
+    @apply antialiased text-ink-900 bg-white;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    overflow-x: hidden;
   }
 }
 
