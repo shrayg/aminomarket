@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { api } from '@/lib/api'
+import { isPublicCatalogVisible } from '@/lib/catalog-visibility'
 import { normalizeProduct, staticProducts, type Product } from '@/data/products'
 
 function filterByCategory(list: Product[], category?: string) {
@@ -23,11 +24,20 @@ function mergeCatalog(list: Product[], apiList: Product[]) {
 }
 
 export function useProducts(category?: string) {
-  const initial = useMemo(() => filterByCategory(staticProducts, category), [category])
+  const catalogVisible = isPublicCatalogVisible()
+  const initial = useMemo(
+    () => (catalogVisible ? filterByCategory(staticProducts, category) : []),
+    [catalogVisible, category]
+  )
   const [products, setProducts] = useState<Product[]>(initial)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
+    if (!catalogVisible) {
+      setProducts([])
+      setLoading(false)
+      return
+    }
     setProducts(filterByCategory(staticProducts, category))
     setLoading(true)
     let cancelled = false
@@ -49,21 +59,29 @@ export function useProducts(category?: string) {
     return () => {
       cancelled = true
     }
-  }, [category])
+  }, [catalogVisible, category])
 
   return { products, loading }
 }
 
 export function useProduct(slug: string | undefined) {
+  const catalogVisible = isPublicCatalogVisible()
   const initial = useMemo(
-    () => (slug ? staticProducts.find((p) => p.slug === slug) ?? null : null),
-    [slug]
+    () =>
+      catalogVisible && slug
+        ? staticProducts.find((p) => p.slug === slug) ?? null
+        : null,
+    [catalogVisible, slug]
   )
   const [product, setProduct] = useState<Product | null>(initial)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    if (!slug) return setLoading(false)
+    if (!catalogVisible || !slug) {
+      setProduct(null)
+      setLoading(false)
+      return
+    }
     setProduct(staticProducts.find((p) => p.slug === slug) ?? null)
     setLoading(true)
     let cancelled = false
@@ -86,7 +104,7 @@ export function useProduct(slug: string | undefined) {
     return () => {
       cancelled = true
     }
-  }, [slug])
+  }, [catalogVisible, slug])
 
   return { product, loading }
 }

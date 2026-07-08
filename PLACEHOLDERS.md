@@ -23,7 +23,6 @@ These appear in the Footer and Contact page.
 - [ ] **Company name** — (currently: Aminomarket)
 - [ ] **Street address** — (currently: 11323 Arcade Dr. STE 105, Little Rock, AR 72212)
 - [ ] **Email** — (currently: aminomarketshop@gmail.com)
-- [ ] **Phone** — (currently: +1 877 312 1560)
 - [ ] **Hours** — (currently: Mon–Fri, 9am–5pm GMT-6)
 
 ---
@@ -53,7 +52,7 @@ Images go in `public/hero/`. Update filenames and links to match.
 ## 5. Form Fields (for reference – users type these in)
 
 Checkout: Email, Full Name, Address, City, State, ZIP  
-Contact: Name, Email, Phone, Subject, Order Number, Message  
+Contact: Name, Email, Subject, Order Number, Message  
 Newsletter: Email  
 Login / Register: Email, Password (Name on register)  
 Forgot password: Email  
@@ -95,7 +94,6 @@ Track order: Order number
 Business Name: 
 Address: 
 Email: 
-Phone: 
 Hours: 
 
 Stripe keys: (add when ready)

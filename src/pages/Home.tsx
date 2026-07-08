@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useProducts } from '@/hooks/useProducts'
+import { isPublicCatalogVisible } from '@/lib/catalog-visibility'
 import { categories } from '@/data/products'
 import { heroSlides } from '@/data/heroCarousel'
 import { ProductCard } from '@/components/ProductCard'
@@ -31,10 +32,11 @@ const faqs = [
 ]
 
 export function Home() {
+  const catalogVisible = isPublicCatalogVisible()
   const { products, loading } = useProducts()
-  const featured = products.filter((p) => p.isFeatured)
-  const bestSellers = products.filter((p) => p.inStock).slice(0, 6)
-  const popular = products.filter((p) => p.inStock).slice(0, 8)
+  const featured = catalogVisible ? products.filter((p) => p.isFeatured) : []
+  const bestSellers = catalogVisible ? products.filter((p) => p.inStock).slice(0, 6) : []
+  const popular = catalogVisible ? products.filter((p) => p.inStock).slice(0, 8) : []
 
   return (
     <div>
@@ -55,12 +57,21 @@ export function Home() {
               cellular discovery.
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
-              <Link
-                to="/shop"
-                className="inline-flex items-center border-2 border-[#c9a227] bg-[#c9a227] px-8 py-3.5 font-semibold text-ink-950 transition hover:bg-[#d4af37]"
-              >
-                Shop Peptides
-              </Link>
+              {catalogVisible ? (
+                <Link
+                  to="/shop"
+                  className="inline-flex items-center border-2 border-[#c9a227] bg-[#c9a227] px-8 py-3.5 font-semibold text-ink-950 transition hover:bg-[#d4af37]"
+                >
+                  Shop Peptides
+                </Link>
+              ) : (
+                <Link
+                  to="/contact"
+                  className="inline-flex items-center border-2 border-[#c9a227] bg-[#c9a227] px-8 py-3.5 font-semibold text-ink-950 transition hover:bg-[#d4af37]"
+                >
+                  Contact Us
+                </Link>
+              )}
             </div>
           </div>
           <div className="relative min-h-[420px]">
@@ -81,6 +92,7 @@ export function Home() {
       </section>
 
       {/* Featured - asymmetric grid */}
+      {catalogVisible && (
       <section className="px-6 py-16">
         <div className="mx-auto max-w-7xl">
           <div className="mb-16">
@@ -102,8 +114,10 @@ export function Home() {
           </div>
         </div>
       </section>
+      )}
 
       {/* Best Sellers */}
+      {catalogVisible && (
       <section className="border-t border-ink-200 bg-ink-50/50 px-6 py-16">
         <div className="mx-auto max-w-7xl">
           <div className="mb-12 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -129,8 +143,10 @@ export function Home() {
           </div>
         </div>
       </section>
+      )}
 
       {/* Popular */}
+      {catalogVisible && (
       <section className="px-6 py-16">
         <div className="mx-auto max-w-7xl">
           <p className="font-sans text-xs font-medium uppercase tracking-[0.2em] text-ink-500">
@@ -150,8 +166,10 @@ export function Home() {
           </div>
         </div>
       </section>
+      )}
 
       {/* Categories - cleaner cards */}
+      {catalogVisible && (
       <section className="border-t border-ink-200 bg-ink-50/50 px-6 py-16">
         <div className="mx-auto max-w-7xl">
           <h2 className="font-sans text-display-sm font-bold tracking-tight text-ink-900">
@@ -178,6 +196,7 @@ export function Home() {
           </div>
         </div>
       </section>
+      )}
 
       {/* Why Aminomarket */}
       <section className="px-6 py-16">

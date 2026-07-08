@@ -443,6 +443,20 @@ export function Shop() {
                 />
               ))}
             </div>
+          ) : products.length === 0 ? (
+            <div className="border border-ink-200 bg-ink-50 px-6 py-14 text-center">
+              <h2 className="font-sans text-xl font-bold text-ink-900">Catalog temporarily unavailable</h2>
+              <p className="mt-2 text-sm text-ink-500">
+                Product listings are hidden right now. For support, email{' '}
+                <a
+                  href="mailto:aminomarketsupport@gmail.com"
+                  className="text-ink-900 underline underline-offset-2 hover:text-accent-dark"
+                >
+                  aminomarketsupport@gmail.com
+                </a>{' '}
+                or message us on Telegram.
+              </p>
+            </div>
           ) : (
             <div className="border border-ink-200 bg-ink-50 px-6 py-14 text-center">
               <h2 className="font-sans text-xl font-bold text-ink-900">No matching products</h2>
