@@ -52,7 +52,7 @@ export function HeroShowcase({ slides, catalogVisible = true }: HeroShowcaseProp
           <p className="mb-5 font-sans text-xs font-medium uppercase tracking-[0.25em] text-brand-lavender/70">
             Copper Peptide Hair Care
           </p>
-          <h1 className="brand-glow font-sans text-4xl font-extrabold leading-[1.1] tracking-tight text-brand-lavender md:text-5xl lg:text-6xl">
+          <h1 className="font-sans text-4xl font-bold leading-[1.1] tracking-tight text-brand-lavender md:text-5xl lg:text-6xl">
             Strand Labs
           </h1>
           <p className="mt-6 max-w-md font-sans text-base leading-relaxed text-white/80">

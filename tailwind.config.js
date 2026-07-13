@@ -4,8 +4,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Syne', 'system-ui', 'sans-serif'],
-        serif: ['Source Serif 4', 'Georgia', 'serif'],
+        sans: ['Satoshi', 'system-ui', 'sans-serif'],
+        serif: ['Satoshi', 'system-ui', 'sans-serif'],
       },
       colors: {
         ink: {
