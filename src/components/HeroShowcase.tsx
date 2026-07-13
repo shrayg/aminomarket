@@ -87,20 +87,45 @@ export function HeroShowcase({ slides, catalogVisible = true }: HeroShowcaseProp
         </div>
 
         <div
-          className="relative min-h-[420px] overflow-hidden bg-[#16131f] lg:min-h-full"
+          className="relative flex min-h-[520px] flex-col bg-[#16131f] lg:min-h-full"
           onMouseEnter={() => setPaused(true)}
           onMouseLeave={() => setPaused(false)}
         >
-          <FadeImageStack
-            images={images}
-            activeIndex={index}
-            alt={slide.title}
-            imageClassName="object-cover"
-            durationMs={1100}
-          />
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink-950/55 via-transparent to-ink-950/10" />
+          <div className="relative min-h-[420px] flex-1 lg:min-h-[560px]">
+            <div className="absolute inset-0 p-5 md:p-8">
+              <div className="relative h-full w-full">
+                <FadeImageStack
+                  images={images}
+                  activeIndex={index}
+                  alt={slide.title}
+                  imageClassName="object-contain object-center"
+                  durationMs={1100}
+                />
+              </div>
+            </div>
+            {slides.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={goPrev}
+                  className="absolute left-3 top-1/2 z-20 -translate-y-1/2 rounded-full bg-ink-950/50 p-2 text-white transition hover:bg-brand-purple/80"
+                  aria-label="Previous image"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={goNext}
+                  className="absolute right-3 top-1/2 z-20 -translate-y-1/2 rounded-full bg-ink-950/50 p-2 text-white transition hover:bg-brand-purple/80"
+                  aria-label="Next image"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+              </>
+            )}
+          </div>
 
-          <div className="absolute inset-x-0 bottom-0 z-10 flex flex-col items-center gap-4 px-6 pb-7 pt-16">
+          <div className="relative z-10 flex shrink-0 flex-col items-center gap-4 border-t border-white/10 bg-ink-950/70 px-6 py-6 backdrop-blur-sm">
             <p
               key={slide.title + index}
               className="animate-hero-fade font-sans text-xs font-semibold uppercase tracking-[0.18em] text-white/85"
@@ -129,27 +154,6 @@ export function HeroShowcase({ slides, catalogVisible = true }: HeroShowcaseProp
               </div>
             )}
           </div>
-
-          {slides.length > 1 && (
-            <>
-              <button
-                type="button"
-                onClick={goPrev}
-                className="absolute left-3 top-1/2 z-20 -translate-y-1/2 rounded-full bg-ink-950/50 p-2 text-white transition hover:bg-brand-purple/80"
-                aria-label="Previous image"
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </button>
-              <button
-                type="button"
-                onClick={goNext}
-                className="absolute right-3 top-1/2 z-20 -translate-y-1/2 rounded-full bg-ink-950/50 p-2 text-white transition hover:bg-brand-purple/80"
-                aria-label="Next image"
-              >
-                <ChevronRight className="h-5 w-5" />
-              </button>
-            </>
-          )}
         </div>
       </div>
     </section>
