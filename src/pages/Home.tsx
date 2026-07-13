@@ -44,8 +44,6 @@ export function Home() {
   const catalogVisible = isPublicCatalogVisible()
   const { products, loading } = useProducts()
   const featured = catalogVisible ? products.filter((p) => p.isFeatured) : []
-  const bestSellers = catalogVisible ? products.filter((p) => p.inStock).slice(0, 6) : []
-  const popular = catalogVisible ? products.filter((p) => p.inStock).slice(0, 8) : []
 
   return (
     <div>
@@ -74,7 +72,7 @@ export function Home() {
               Shampoo &amp; Conditioner
             </h2>
           </div>
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mx-auto grid max-w-4xl gap-8 sm:grid-cols-2">
             {loading ? (
               <p className="col-span-full text-center text-ink-500">Loading...</p>
             ) : (
@@ -82,56 +80,6 @@ export function Home() {
                 <ProductCard key={p.id} product={p} badge="New" />
               ))
             )}
-          </div>
-        </div>
-      </section>
-      )}
-
-      {catalogVisible && bestSellers.length > 1 && (
-      <section className="border-t border-ink-200 bg-ink-50/50 px-6 py-16">
-        <div className="mx-auto max-w-7xl">
-          <div className="mb-12 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="font-sans text-xs font-medium uppercase tracking-[0.2em] text-ink-500">
-                Shop
-              </p>
-              <h2 className="mt-2 font-sans text-display-sm font-bold tracking-tight text-ink-900">
-                Best Sellers
-              </h2>
-            </div>
-            <Link
-              to="/shop"
-              className="font-sans text-sm font-semibold text-ink-700 underline underline-offset-4 hover:text-ink-900"
-            >
-              View All
-            </Link>
-          </div>
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {bestSellers.map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
-          </div>
-        </div>
-      </section>
-      )}
-
-      {catalogVisible && popular.length > 1 && (
-      <section className="px-6 py-16">
-        <div className="mx-auto max-w-7xl">
-          <p className="font-sans text-xs font-medium uppercase tracking-[0.2em] text-ink-500">
-            Collection
-          </p>
-          <h2 className="mt-3 font-sans text-display-sm font-bold tracking-tight text-ink-900">
-            Popular Products
-          </h2>
-          <div className="mt-14 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            {popular.map((p) => (
-              <ProductCard
-                key={p.id}
-                product={p}
-                badge={p.isFeatured ? 'New' : undefined}
-              />
-            ))}
           </div>
         </div>
       </section>
