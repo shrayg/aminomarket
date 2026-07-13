@@ -94,7 +94,7 @@ export function AddToCartButton({
       <button
         type="button"
         onClick={handleClick}
-        className="flex min-w-0 flex-1 items-center justify-center gap-2 border-2 border-ink-900 bg-ink-900 px-4 py-3 font-sans text-sm font-semibold text-white transition hover:bg-ink-800 active:scale-[0.98]"
+        className="flex min-w-0 flex-1 items-center justify-center gap-2 border-2 border-brand-purple bg-brand-purple px-4 py-3 font-sans text-sm font-semibold text-white transition hover:border-brand-violet hover:bg-brand-violet active:scale-[0.98]"
       >
         {added ? (
           <>

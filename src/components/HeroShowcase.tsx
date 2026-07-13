@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import type { HeroSlide } from '@/data/heroCarousel'
 
 function randomIndex(length: number, exclude?: number) {
@@ -18,8 +19,8 @@ type HeroShowcaseProps = {
 }
 
 /**
- * Full-bleed product hero: image fills the frame, brand copy sits on top,
- * and a new random shot is chosen on mount and as the gallery cycles.
+ * Split hero: copy on the left, full-bleed product photography on the right.
+ * Right-panel images start random and cycle randomly.
  */
 export function HeroShowcase({ slides, catalogVisible = true }: HeroShowcaseProps) {
   const [index, setIndex] = useState(() => randomIndex(Math.max(slides.length, 1)))
@@ -38,86 +39,116 @@ export function HeroShowcase({ slides, catalogVisible = true }: HeroShowcaseProp
   if (slides.length === 0) return null
 
   const slide = slides[index] ?? slides[0]
+  const goPrev = () => setIndex((current) => (current - 1 + slides.length) % slides.length)
+  const goNext = () => setIndex((current) => (current + 1) % slides.length)
 
   return (
-    <section
-      className="relative isolate min-h-[78vh] overflow-hidden bg-ink-950 text-white md:min-h-[88vh]"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
-    >
-      {slides.map((candidate, i) => (
-        <img
-          key={candidate.image}
-          src={candidate.image}
-          alt=""
-          aria-hidden={i !== index}
-          className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ${
-            i === index ? 'opacity-100' : 'opacity-0'
-          }`}
-          loading={i === 0 ? 'eager' : 'lazy'}
-        />
-      ))}
-
-      <div className="absolute inset-0 bg-gradient-to-r from-ink-950/90 via-ink-950/65 to-ink-950/25" />
-      <div className="absolute inset-0 bg-gradient-to-t from-ink-950/80 via-transparent to-ink-950/35" />
+    <section className="relative bg-ink-950 text-white">
       <div className="noise pointer-events-none absolute inset-0" />
-
-      <div className="relative z-10 mx-auto flex min-h-[78vh] max-w-7xl flex-col justify-center px-6 py-16 md:min-h-[88vh] md:px-12 lg:py-24">
-        <p className="mb-5 font-sans text-xs font-medium uppercase tracking-[0.25em] text-white/60">
-          Copper Peptide Hair Care
-        </p>
-        <h1 className="brand-glow max-w-xl font-sans text-5xl font-extrabold leading-[1.05] tracking-tight text-brand-lavender md:text-6xl lg:text-7xl">
-          Strand Labs
-        </h1>
-        <p className="mt-6 max-w-lg font-sans text-base leading-relaxed text-white/85 md:text-lg">
-          Blue copper peptide shampoo and conditioner for everyday hair care.
-          Clean formula, matching pair, made for modern scalp and strand routines.
-        </p>
-
-        <div className="mt-9 flex flex-wrap gap-4">
-          {catalogVisible ? (
-            <>
+      <div className="relative mx-auto grid max-w-7xl grid-cols-1 lg:grid-cols-2">
+        <div className="flex flex-col justify-center px-6 py-14 text-left md:px-12 lg:py-20">
+          <p className="mb-5 font-sans text-xs font-medium uppercase tracking-[0.25em] text-brand-lavender/70">
+            Copper Peptide Hair Care
+          </p>
+          <h1 className="brand-glow font-sans text-4xl font-extrabold leading-[1.1] tracking-tight text-brand-lavender md:text-5xl lg:text-6xl">
+            Strand Labs
+          </h1>
+          <p className="mt-6 max-w-md font-sans text-base leading-relaxed text-white/80">
+            Blue copper peptide shampoo and conditioner for everyday hair care.
+            Clean formula, matching pair, made for modern scalp and strand routines.
+          </p>
+          <div className="mt-8 flex flex-wrap gap-4">
+            {catalogVisible ? (
+              <>
+                <Link
+                  to="/product/blue-copper-shampoo"
+                  className="inline-flex items-center border-2 border-brand-purple bg-brand-purple px-8 py-3.5 font-semibold text-white transition hover:border-brand-lavender hover:bg-brand-lavender hover:text-ink-950"
+                >
+                  Shop Shampoo
+                </Link>
+                <Link
+                  to="/product/blue-copper-conditioner"
+                  className="inline-flex items-center border-2 border-brand-lavender/50 px-8 py-3.5 font-semibold text-brand-lavender transition hover:border-brand-lavender hover:bg-brand-lavender/10"
+                >
+                  Shop Conditioner
+                </Link>
+              </>
+            ) : (
               <Link
-                to="/product/blue-copper-shampoo"
-                className="inline-flex items-center border-2 border-brand-gold bg-brand-gold px-8 py-3.5 font-semibold text-ink-950 transition hover:border-brand-gold-light hover:bg-brand-gold-light"
+                to="/contact"
+                className="inline-flex items-center border-2 border-brand-purple bg-brand-purple px-8 py-3.5 font-semibold text-white transition hover:border-brand-lavender hover:bg-brand-lavender hover:text-ink-950"
               >
-                Shop Shampoo
+                Contact Us
               </Link>
-              <Link
-                to="/product/blue-copper-conditioner"
-                className="inline-flex items-center border-2 border-white/50 px-8 py-3.5 font-semibold text-white transition hover:border-white hover:bg-white/10"
-              >
-                Shop Conditioner
-              </Link>
-            </>
-          ) : (
-            <Link
-              to="/contact"
-              className="inline-flex items-center border-2 border-brand-gold bg-brand-gold px-8 py-3.5 font-semibold text-ink-950 transition hover:bg-brand-gold-light"
-            >
-              Contact Us
-            </Link>
-          )}
+            )}
+          </div>
         </div>
 
-        <div className="mt-10 flex items-center gap-3">
-          <p className="font-sans text-xs font-semibold uppercase tracking-[0.18em] text-white/70">
-            Now showing · {slide.title}
-          </p>
+        <div
+          className="relative min-h-[420px] overflow-hidden bg-[#16131f] lg:min-h-full"
+          onMouseEnter={() => setPaused(true)}
+          onMouseLeave={() => setPaused(false)}
+        >
+          {slides.map((candidate, i) => (
+            <img
+              key={candidate.image}
+              src={candidate.image}
+              alt={candidate.title}
+              aria-hidden={i !== index}
+              className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ${
+                i === index ? 'opacity-100' : 'opacity-0'
+              }`}
+              loading={i === 0 ? 'eager' : 'lazy'}
+            />
+          ))}
+          <div className="absolute inset-0 bg-gradient-to-t from-ink-950/55 via-transparent to-ink-950/10" />
+
+          <div className="absolute inset-x-0 bottom-0 z-10 flex flex-col items-center gap-4 px-6 pb-7 pt-16">
+            <p className="font-sans text-xs font-semibold uppercase tracking-[0.18em] text-white/85">
+              {slide.title}
+            </p>
+            <Link
+              to={slide.href}
+              className="inline-flex border-2 border-brand-purple bg-brand-purple px-6 py-3 font-sans text-sm font-semibold text-white transition hover:border-brand-lavender hover:bg-brand-lavender hover:text-ink-950"
+            >
+              {slide.buttonText}
+            </Link>
+            {slides.length > 1 && (
+              <div className="flex gap-1.5">
+                {slides.map((_, i) => (
+                  <button
+                    key={slides[i].image + i}
+                    type="button"
+                    aria-label={`Show image ${i + 1}`}
+                    onClick={() => setIndex(i)}
+                    className={`h-1.5 rounded-full transition-all ${
+                      i === index ? 'w-5 bg-brand-lavender' : 'w-1.5 bg-white/35 hover:bg-white/70'
+                    }`}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
           {slides.length > 1 && (
-            <div className="flex gap-1.5">
-              {slides.map((_, i) => (
-                <button
-                  key={slides[i].image + i}
-                  type="button"
-                  aria-label={`Show image ${i + 1}`}
-                  onClick={() => setIndex(i)}
-                  className={`h-1.5 rounded-full transition-all ${
-                    i === index ? 'w-5 bg-brand-gold' : 'w-1.5 bg-white/35 hover:bg-white/70'
-                  }`}
-                />
-              ))}
-            </div>
+            <>
+              <button
+                type="button"
+                onClick={goPrev}
+                className="absolute left-3 top-1/2 z-20 -translate-y-1/2 rounded-full bg-ink-950/50 p-2 text-white transition hover:bg-brand-purple/80"
+                aria-label="Previous image"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+              <button
+                type="button"
+                onClick={goNext}
+                className="absolute right-3 top-1/2 z-20 -translate-y-1/2 rounded-full bg-ink-950/50 p-2 text-white transition hover:bg-brand-purple/80"
+                aria-label="Next image"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </button>
+            </>
           )}
         </div>
       </div>

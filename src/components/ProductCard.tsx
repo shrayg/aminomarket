@@ -103,7 +103,7 @@ export function ProductCard({
           hasMultipleVariants ? (
             <Link
               to={`/product/${product.slug}`}
-              className="flex w-full items-center justify-center gap-2 border-2 border-ink-900 bg-ink-900 px-4 py-3 font-sans text-sm font-semibold text-white transition hover:border-brand-violet hover:bg-brand-violet"
+              className="flex w-full items-center justify-center gap-2 border-2 border-brand-purple bg-brand-purple px-4 py-3 font-sans text-sm font-semibold text-white transition hover:border-brand-violet hover:bg-brand-violet"
             >
               Select size
             </Link>

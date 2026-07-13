@@ -25,8 +25,6 @@ export default {
           lavender: '#c4b5fd',
           purple: '#a78bfa',
           violet: '#8b5cf6',
-          gold: '#c9a227',
-          'gold-light': '#d4af37',
           sky: '#7dd3fc',
           mist: '#e0f2fe',
         },
