@@ -9,6 +9,7 @@ export function Product() {
   const { slug } = useParams()
   const { product, loading } = useProduct(slug)
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null)
+  const [selectedImage, setSelectedImage] = useState<string | null>(null)
   const trackedProductSlug = useRef('')
 
   const selectedVariant = useMemo(() => {
@@ -19,6 +20,17 @@ export function Product() {
     )
   }, [product, selectedVariantId])
 
+  const gallery = useMemo(() => {
+    if (!product) return []
+    const fromProduct = product.images?.length ? product.images : product.image ? [product.image] : []
+    return [...new Set(fromProduct.filter(Boolean))]
+  }, [product])
+
+  useEffect(() => {
+    setSelectedImage(null)
+    setSelectedVariantId(null)
+  }, [product?.slug])
+
   useEffect(() => {
     function fire() {
       if (!product) return
@@ -28,10 +40,6 @@ export function Product() {
       trackEvent('product_view', { productSlug: product.slug })
     }
     fire()
-    // Without this, a user who lands directly on a product page and accepts
-    // the age gate AFTER mount never gets their product_view recorded — the
-    // first effect run was no-op'd by the consent gate and the ref protected
-    // re-fires once consent flipped on.
     window.addEventListener('amp-consent', fire)
     return () => window.removeEventListener('amp-consent', fire)
   }, [product])
@@ -57,7 +65,8 @@ export function Product() {
     )
   }
 
-  const displayImage = selectedVariant?.image ?? product.image
+  const displayImage =
+    selectedImage ?? selectedVariant?.image ?? product.image ?? gallery[0]
   const displayPrice = selectedVariant?.price ?? product.price
   const inStock = selectedVariant ? selectedVariant.inStock : product.inStock
 
@@ -72,16 +81,37 @@ export function Product() {
       </nav>
 
       <div className="grid gap-16 lg:grid-cols-2">
-        <div className="aspect-square overflow-hidden rounded-2xl bg-gradient-to-br from-ink-100 to-ink-50">
-          {displayImage ? (
-            <img
-              src={displayImage}
-              alt={product.name}
-              className="h-full w-full object-contain transition-opacity duration-300"
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center">
-              <FlaskConical className="h-32 w-32 text-ink-300" />
+        <div>
+          <div className="aspect-square overflow-hidden rounded-2xl bg-gradient-to-br from-ink-100 to-ink-50">
+            {displayImage ? (
+              <img
+                src={displayImage}
+                alt={product.name}
+                className="h-full w-full object-contain transition-opacity duration-300"
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center">
+                <FlaskConical className="h-32 w-32 text-ink-300" />
+              </div>
+            )}
+          </div>
+          {gallery.length > 1 && (
+            <div className="mt-4 grid grid-cols-4 gap-3">
+              {gallery.map((image) => {
+                const active = image === displayImage
+                return (
+                  <button
+                    key={image}
+                    type="button"
+                    onClick={() => setSelectedImage(image)}
+                    className={`aspect-square overflow-hidden rounded-xl border bg-ink-50 transition ${
+                      active ? 'border-ink-900 ring-1 ring-ink-900' : 'border-ink-200 hover:border-ink-400'
+                    }`}
+                  >
+                    <img src={image} alt="" className="h-full w-full object-contain" />
+                  </button>
+                )
+              })}
             </div>
           )}
         </div>
@@ -94,11 +124,6 @@ export function Product() {
           )}
           <h1 className="font-sans text-3xl font-bold text-ink-900 md:text-4xl">
             {product.name}
-            {selectedVariant && (
-              <span className="ml-2 font-sans text-2xl font-medium text-ink-500">
-                — {selectedVariant.dose}
-              </span>
-            )}
           </h1>
 
           <p className="mt-6 font-sans text-3xl font-bold text-ink-900">
@@ -114,7 +139,7 @@ export function Product() {
           {product.variants && product.variants.length > 0 && (
             <div className="mt-8">
               <p className="font-sans text-xs font-semibold uppercase tracking-widest text-ink-500">
-                Select Dosage
+                Select Size
               </p>
               <div className="mt-4 flex flex-wrap gap-2">
                 {product.variants.map((vr) => {
@@ -122,7 +147,10 @@ export function Product() {
                   return (
                     <button
                       key={vr.id}
-                      onClick={() => setSelectedVariantId(vr.id)}
+                      onClick={() => {
+                        setSelectedVariantId(vr.id)
+                        if (vr.image) setSelectedImage(vr.image)
+                      }}
                       disabled={!vr.inStock}
                       className={`relative min-w-[80px] border px-4 py-3 font-sans text-sm font-semibold transition ${
                         isSelected

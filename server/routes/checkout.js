@@ -99,7 +99,7 @@ router.post('/', async (req, res) => {
     }
 
     if (ruoAcknowledged !== true) {
-      throw checkoutError('You must confirm the Research Use Only acknowledgment to continue.')
+      throw checkoutError('You must confirm the order acknowledgment to continue.')
     }
 
     const shippingAddress = normalizeShippingAddress(shipping)

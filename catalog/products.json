@@ -1,11 +1,17 @@
 [
   {
-    "id": "ghk-cu-shampoo",
-    "name": "GHK-Cu Peptide Shampoo",
-    "slug": "ghk-cu-shampoo",
+    "id": "blue-copper-shampoo",
+    "name": "Blue Copper Peptide Shampoo",
+    "slug": "blue-copper-shampoo",
     "price": 48,
-    "image": "/products/pomelli-bdna-image-0530.webp",
-    "description": "Strand Labs GHK-Cu peptide shampoo — a copper-peptide hair care formula made for everyday use. Clean rinse, lightweight feel, formulated with GHK-Cu.",
+    "image": "/products/blue-copper-shampoo-01.png",
+    "images": [
+      "/products/blue-copper-shampoo-01.png",
+      "/products/blue-copper-shampoo-02.png",
+      "/products/blue-copper-shampoo-03.png",
+      "/products/blue-copper-shampoo-04.png"
+    ],
+    "description": "Strand Labs Blue Copper Peptide Shampoo — a 16.9 fl oz (500ml) copper-peptide formula for everyday cleansing. Clean rinse, lightweight feel, made for modern hair and scalp routines.",
     "category": "Hair Care",
     "categorySlug": "hair-care",
     "researchAreas": [],
@@ -13,17 +19,52 @@
     "isFeatured": true,
     "variants": [
       {
-        "id": "ghk-cu-shampoo-8oz",
-        "dose": "8 oz",
+        "id": "blue-copper-shampoo-500ml",
+        "dose": "16.9 fl oz (500ml)",
         "price": 48,
-        "image": "/products/pomelli-bdna-image-0530.webp",
+        "image": "/products/blue-copper-shampoo-01.png",
         "inStock": true
       },
       {
-        "id": "ghk-cu-shampoo-2pack",
-        "dose": "2 × 8 oz",
+        "id": "blue-copper-shampoo-2pack",
+        "dose": "2 × 16.9 fl oz",
         "price": 86,
-        "image": "/products/pomelli-bdna-image-05301.webp",
+        "image": "/products/blue-copper-shampoo-03.png",
+        "inStock": true
+      }
+    ]
+  },
+  {
+    "id": "blue-copper-conditioner",
+    "name": "Blue Copper Peptide Conditioner",
+    "slug": "blue-copper-conditioner",
+    "price": 48,
+    "image": "/products/blue-copper-conditioner-02.png",
+    "images": [
+      "/products/blue-copper-conditioner-02.png",
+      "/products/blue-copper-conditioner-04.png",
+      "/products/blue-copper-conditioner-03.png",
+      "/products/blue-copper-conditioner-01.png"
+    ],
+    "description": "Strand Labs Blue Copper Peptide Conditioner — a 16.9 fl oz (500ml) copper-peptide conditioner for everyday softness and manageability. Pair with our matching shampoo.",
+    "category": "Hair Care",
+    "categorySlug": "hair-care",
+    "researchAreas": [],
+    "inStock": true,
+    "isFeatured": true,
+    "variants": [
+      {
+        "id": "blue-copper-conditioner-500ml",
+        "dose": "16.9 fl oz (500ml)",
+        "price": 48,
+        "image": "/products/blue-copper-conditioner-02.png",
+        "inStock": true
+      },
+      {
+        "id": "blue-copper-conditioner-2pack",
+        "dose": "2 × 16.9 fl oz",
+        "price": 86,
+        "image": "/products/blue-copper-conditioner-01.png",
         "inStock": true
       }
     ]

@@ -14,6 +14,7 @@ export type Product = {
   slug: string
   price: number
   image?: string
+  images?: string[]
   description?: string
   category?: string | { name: string }
   categorySlug?: string
@@ -32,6 +33,7 @@ export function normalizeProduct(p: Record<string, unknown>): Product {
     slug: String(p.slug),
     price: Number(p.price),
     image: typeof p.image === 'string' ? p.image : undefined,
+    images: Array.isArray(p.images) ? p.images.map((image) => String(image)) : undefined,
     description: typeof p.description === 'string' ? p.description : undefined,
     category: typeof cat?.name === 'string' ? cat.name : String(p.category || ''),
     categorySlug: cat?.slug || String(p.categorySlug || ''),

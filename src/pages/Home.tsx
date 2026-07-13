@@ -60,17 +60,25 @@ export function Home() {
               Strand Labs
             </h1>
             <p className="mt-6 max-w-md font-sans text-base leading-relaxed text-ink-300">
-              GHK-Cu peptide shampoo for everyday hair care. Clean rinse,
-              lightweight feel, made for modern scalp and strand routines.
+              Blue copper peptide shampoo and conditioner for everyday hair care.
+              Clean formula, matching pair, made for modern scalp and strand routines.
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
               {catalogVisible ? (
-                <Link
-                  to="/product/ghk-cu-shampoo"
-                  className="inline-flex items-center border-2 border-[#c9a227] bg-[#c9a227] px-8 py-3.5 font-semibold text-ink-950 transition hover:bg-[#d4af37]"
-                >
-                  Shop GHK-Cu Shampoo
-                </Link>
+                <>
+                  <Link
+                    to="/product/blue-copper-shampoo"
+                    className="inline-flex items-center border-2 border-[#c9a227] bg-[#c9a227] px-8 py-3.5 font-semibold text-ink-950 transition hover:bg-[#d4af37]"
+                  >
+                    Shop Shampoo
+                  </Link>
+                  <Link
+                    to="/product/blue-copper-conditioner"
+                    className="inline-flex items-center border-2 border-white/40 px-8 py-3.5 font-semibold text-white transition hover:border-white hover:bg-white/10"
+                  >
+                    Shop Conditioner
+                  </Link>
+                </>
               ) : (
                 <Link
                   to="/contact"
@@ -105,7 +113,7 @@ export function Home() {
               Featured
             </p>
             <h2 className="mt-3 font-sans text-display-sm font-bold tracking-tight text-ink-900">
-              GHK-Cu Peptide Shampoo
+              Shampoo &amp; Conditioner
             </h2>
           </div>
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
