@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import type { HeroSlide } from '@/data/heroCarousel'
+import { FadeImageStack } from '@/components/FadeImageStack'
 
 function randomIndex(length: number, exclude?: number) {
   if (length <= 1) return 0
@@ -20,7 +21,7 @@ type HeroShowcaseProps = {
 
 /**
  * Split hero: copy on the left, full-bleed product photography on the right.
- * Right-panel images start random and cycle randomly.
+ * Right-panel images start random and cycle randomly with a smooth crossfade.
  */
 export function HeroShowcase({ slides, catalogVisible = true }: HeroShowcaseProps) {
   const [index, setIndex] = useState(() => randomIndex(Math.max(slides.length, 1)))
@@ -39,6 +40,7 @@ export function HeroShowcase({ slides, catalogVisible = true }: HeroShowcaseProp
   if (slides.length === 0) return null
 
   const slide = slides[index] ?? slides[0]
+  const images = slides.map((item) => item.image)
   const goPrev = () => setIndex((current) => (current - 1 + slides.length) % slides.length)
   const goNext = () => setIndex((current) => (current + 1) % slides.length)
 
@@ -89,22 +91,20 @@ export function HeroShowcase({ slides, catalogVisible = true }: HeroShowcaseProp
           onMouseEnter={() => setPaused(true)}
           onMouseLeave={() => setPaused(false)}
         >
-          {slides.map((candidate, i) => (
-            <img
-              key={candidate.image}
-              src={candidate.image}
-              alt={candidate.title}
-              aria-hidden={i !== index}
-              className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ${
-                i === index ? 'opacity-100' : 'opacity-0'
-              }`}
-              loading={i === 0 ? 'eager' : 'lazy'}
-            />
-          ))}
-          <div className="absolute inset-0 bg-gradient-to-t from-ink-950/55 via-transparent to-ink-950/10" />
+          <FadeImageStack
+            images={images}
+            activeIndex={index}
+            alt={slide.title}
+            imageClassName="object-cover"
+            durationMs={1100}
+          />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink-950/55 via-transparent to-ink-950/10" />
 
           <div className="absolute inset-x-0 bottom-0 z-10 flex flex-col items-center gap-4 px-6 pb-7 pt-16">
-            <p className="font-sans text-xs font-semibold uppercase tracking-[0.18em] text-white/85">
+            <p
+              key={slide.title + index}
+              className="animate-hero-fade font-sans text-xs font-semibold uppercase tracking-[0.18em] text-white/85"
+            >
               {slide.title}
             </p>
             <Link
@@ -121,7 +121,7 @@ export function HeroShowcase({ slides, catalogVisible = true }: HeroShowcaseProp
                     type="button"
                     aria-label={`Show image ${i + 1}`}
                     onClick={() => setIndex(i)}
-                    className={`h-1.5 rounded-full transition-all ${
+                    className={`h-1.5 rounded-full transition-all duration-500 ease-in-out ${
                       i === index ? 'w-5 bg-brand-lavender' : 'w-1.5 bg-white/35 hover:bg-white/70'
                     }`}
                   />

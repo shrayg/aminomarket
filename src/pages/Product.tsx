@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import { FlaskConical } from 'lucide-react'
 import { useProduct } from '@/hooks/useProducts'
 import { AddToCartButton } from '@/components/AddToCartButton'
+import { FadeImageStack } from '@/components/FadeImageStack'
 import { hasAnalyticsConsent, trackEvent } from '@/lib/analytics'
 
 export function Product() {
@@ -69,6 +70,7 @@ export function Product() {
     selectedImage ?? selectedVariant?.image ?? product.image ?? gallery[0]
   const displayPrice = selectedVariant?.price ?? product.price
   const inStock = selectedVariant ? selectedVariant.inStock : product.inStock
+  const activeGalleryIndex = Math.max(0, gallery.indexOf(displayImage || ''))
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-16">
@@ -82,12 +84,14 @@ export function Product() {
 
       <div className="grid gap-16 lg:grid-cols-2">
         <div>
-          <div className="aspect-square overflow-hidden rounded-2xl bg-gradient-to-br from-brand-mist via-ink-50 to-brand-lavender/30">
-            {displayImage ? (
-              <img
-                src={displayImage}
+          <div className="relative aspect-square overflow-hidden rounded-2xl bg-gradient-to-br from-brand-mist via-ink-50 to-brand-lavender/30">
+            {gallery.length > 0 ? (
+              <FadeImageStack
+                images={gallery}
+                activeIndex={activeGalleryIndex}
                 alt={product.name}
-                className="h-full w-full object-contain transition-opacity duration-300"
+                imageClassName="object-contain"
+                durationMs={800}
               />
             ) : (
               <div className="flex h-full items-center justify-center">
@@ -97,15 +101,15 @@ export function Product() {
           </div>
           {gallery.length > 1 && (
             <div className="mt-4 grid grid-cols-4 gap-3">
-              {gallery.map((image) => {
-                const active = image === displayImage
+              {gallery.map((image, i) => {
+                const active = i === activeGalleryIndex
                 return (
                   <button
                     key={image}
                     type="button"
                     onClick={() => setSelectedImage(image)}
-                    className={`aspect-square overflow-hidden rounded-xl border bg-ink-50 transition ${
-                      active ? 'border-ink-900 ring-1 ring-ink-900' : 'border-ink-200 hover:border-ink-400'
+                    className={`aspect-square overflow-hidden rounded-xl border bg-ink-50 transition duration-300 ${
+                      active ? 'border-brand-purple ring-1 ring-brand-purple' : 'border-ink-200 hover:border-brand-lavender'
                     }`}
                   >
                     <img src={image} alt="" className="h-full w-full object-contain" />

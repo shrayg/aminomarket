@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { FlaskConical } from 'lucide-react'
 import { getStartingPrice, type Product } from '@/data/products'
 import { AddToCartButton } from './AddToCartButton'
+import { FadeImageStack } from './FadeImageStack'
 
 function productGallery(product: Product) {
   const images = product.images?.length
@@ -47,31 +48,32 @@ export function ProductCard({
     return () => window.clearInterval(id)
   }, [gallery])
 
-  const displayImage = gallery[imageIndex] ?? product.image
-
   return (
     <article className="group flex flex-col border border-ink-200 bg-white transition hover:border-brand-purple/40 hover:shadow-[0_18px_40px_-28px_rgba(167,139,250,0.55)]">
       <Link to={`/product/${product.slug}`} className="flex flex-1 flex-col">
         <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-brand-mist/70 via-ink-50 to-brand-lavender/20">
-          {displayImage ? (
-            <img
-              src={displayImage}
-              alt={product.name}
-              loading="lazy"
-              className="h-full w-full object-contain transition duration-500 group-hover:scale-105"
-            />
+          {gallery.length > 0 ? (
+            <div className="absolute inset-0 transition duration-700 ease-out group-hover:scale-105">
+              <FadeImageStack
+                images={gallery}
+                activeIndex={imageIndex}
+                alt={product.name}
+                imageClassName="object-contain"
+                durationMs={900}
+              />
+            </div>
           ) : (
             <div className="absolute inset-0 flex items-center justify-center">
               <FlaskConical className="h-16 w-16 text-ink-300 transition group-hover:text-brand-purple" />
             </div>
           )}
           {badge && (
-            <span className="absolute left-0 top-0 bg-ink-900 px-3 py-1.5 font-sans text-[11px] font-semibold uppercase tracking-wider text-white">
+            <span className="absolute left-0 top-0 z-10 bg-ink-900 px-3 py-1.5 font-sans text-[11px] font-semibold uppercase tracking-wider text-white">
               {badge}
             </span>
           )}
           {!product.inStock && (
-            <span className="absolute left-0 top-0 bg-ink-700 px-3 py-1.5 font-sans text-[11px] font-semibold uppercase tracking-wider text-white">
+            <span className="absolute left-0 top-0 z-10 bg-ink-700 px-3 py-1.5 font-sans text-[11px] font-semibold uppercase tracking-wider text-white">
               Out of Stock
             </span>
           )}
