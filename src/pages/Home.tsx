@@ -51,11 +51,13 @@ export function Home() {
     <div>
       <HeroShowcase slides={heroSlides} catalogVisible={catalogVisible} />
 
-      <section className="border-b border-brand-lavender/30 bg-gradient-to-r from-brand-mist/40 via-white to-brand-lavender/20 py-6">
-        <div className="mx-auto flex max-w-4xl flex-wrap justify-center gap-x-12 gap-y-2 px-6 text-center text-[13px] font-medium uppercase tracking-widest text-ink-500">
+      <section className="border-b border-brand-lavender/30 bg-gradient-to-r from-brand-mist/40 via-white to-brand-lavender/20 py-4">
+        <div className="mx-auto flex max-w-7xl flex-nowrap items-center justify-between gap-3 overflow-x-auto px-6 text-center text-[11px] font-medium uppercase tracking-[0.14em] text-ink-500 sm:gap-6 sm:text-[12px] md:justify-center md:gap-10 md:text-[13px] md:tracking-widest">
           {['GHK-Cu Formula', 'Everyday Hair Care', 'Free Shipping $200+', 'Secure Payment', '24/7 Support'].map(
             (b) => (
-              <span key={b}>{b}</span>
+              <span key={b} className="shrink-0 whitespace-nowrap">
+                {b}
+              </span>
             )
           )}
         </div>
