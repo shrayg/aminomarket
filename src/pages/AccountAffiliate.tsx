@@ -45,7 +45,7 @@ function ApplyForm({ onSubmitted }: { onSubmitted: (status: string) => void }) {
       <p className="text-sm leading-relaxed text-ink-600">
         Affiliates earn 25% of estimated profit on every order placed using their personal 10%-off
         code, scaling to 40% once you cross 50 orders and $2,500 in product processed. Approval is
-        manual: tell us a little about how you'd promote Aminomarket and we'll review within 24-48
+        manual: tell us a little about how you'd promote Strand Labs and we'll review within 24-48
         hours.
       </p>
       <label className="block text-sm text-ink-700">

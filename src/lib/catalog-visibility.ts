@@ -1,5 +1,5 @@
-// Flip to true when the public product catalog should be visible again.
-export const PUBLIC_CATALOG_VISIBLE = false
+// Flip to false to hide the public product catalog.
+export const PUBLIC_CATALOG_VISIBLE = true
 
 export function isPublicCatalogVisible() {
   return PUBLIC_CATALOG_VISIBLE

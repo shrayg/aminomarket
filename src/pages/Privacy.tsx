@@ -7,7 +7,7 @@ export function Privacy() {
         Privacy Policy
       </h1>
       <p className="mt-3 text-sm uppercase tracking-wider text-ink-400">
-        How Amino Market handles the data you provide
+        How Strand Labs handles the data you provide
       </p>
 
       <section className="mt-10">
@@ -15,8 +15,8 @@ export function Privacy() {
           Who we are
         </h2>
         <p className="mt-4 leading-relaxed text-ink-600">
-          Personal information collected through aminomarket.shop is
-          handled by the operator of &ldquo;Amino Market.&rdquo; Privacy
+          Personal information collected through Strand Labs is
+          handled by the operator of &ldquo;Strand Labs.&rdquo; Privacy
           questions and data requests can be sent to{' '}
           <a
             href="mailto:aminomarketsupport@gmail.com"
@@ -211,8 +211,8 @@ export function Privacy() {
         <p className="mt-4 leading-relaxed text-ink-600">
           We also disclose data when required by law, in response to a
           valid subpoena, court order, or government request, or when
-          necessary to protect the rights, safety, or property of Amino
-          Market, our customers, or the public.
+          necessary to protect the rights, safety, or property of Strand
+          Labs, our customers, or the public.
         </p>
       </section>
 

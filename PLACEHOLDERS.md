@@ -1,4 +1,4 @@
-# Aminomarket Placeholder Checklist
+# Strand Labs Placeholder Checklist
 
 Fill in each item and mark when done. Use this as a reference when sending content or configuring the site.
 
@@ -20,7 +20,7 @@ Fill in each item and mark when done. Use this as a reference when sending conte
 
 These appear in the Footer and Contact page.
 
-- [ ] **Company name** — (currently: Aminomarket)
+- [ ] **Company name** — (currently: Strand Labs)
 - [ ] **Street address** — (currently: 11323 Arcade Dr. STE 105, Little Rock, AR 72212)
 - [ ] **Email** — (currently: aminomarketshop@gmail.com)
 - [ ] **Hours** — (currently: Mon–Fri, 9am–5pm GMT-6)

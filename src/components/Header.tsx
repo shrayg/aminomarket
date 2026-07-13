@@ -22,7 +22,7 @@ export function Header() {
       <div className="bg-ink-950 px-4 py-3">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-4 gap-y-2 text-center text-sm leading-normal text-white/95">
           <Logo variant="dark" height="sm" />
-          <span>Launch Week: 20% Off</span>
+          <span>GHK-Cu Peptide Shampoo</span>
           <span className="hidden sm:inline">·</span>
           <Link to="/track-order" className="underline decoration-white/60 underline-offset-2 hover:decoration-white">
             Track Order

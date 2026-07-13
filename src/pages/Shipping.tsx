@@ -17,8 +17,7 @@ export function Shipping() {
         <p className="mt-4 leading-relaxed text-ink-600">
           Standard turnaround &mdash; from order placement to delivery on
           your doorstep &mdash; is <strong>1 to 2 weeks</strong>. This
-          covers payment verification, batch preparation, vialing, QC release,
-          and carrier transit time. Orders typically{' '}
+          covers payment verification, packing, and carrier transit time. Orders typically{' '}
           <strong>ship within 1&ndash;2 weeks</strong> and{' '}
           <strong>arrive within 1&ndash;2 weeks</strong> of being shipped.
         </p>
@@ -77,7 +76,7 @@ export function Shipping() {
         </ul>
         <p className="mt-4 leading-relaxed text-ink-600">
           It is the customer&apos;s responsibility to confirm that import of
-          research materials is lawful in their jurisdiction before
+          cosmetic products is lawful in their jurisdiction before
           ordering. Any customs duties, VAT, GST, or import fees assessed by
           the destination country are the customer&apos;s responsibility and
           are <strong>not</strong> included in the shipping rate quoted at
@@ -150,23 +149,19 @@ export function Shipping() {
 
       <section className="mt-10">
         <h2 className="font-sans text-xl font-bold text-ink-900">
-          Temperature handling
+          Packaging &amp; storage
         </h2>
         <p className="mt-4 leading-relaxed text-ink-600">
-          Lyophilized research peptides remain stable at ambient temperature
-          for the in-transit window we use, so parcels ship at ambient
-          temperature with standard protective packaging. Once the carrier
-          hands the parcel to you, all temperature and storage decisions are
-          the customer&apos;s responsibility.
+          Shampoo ships in protective outer packaging at ambient temperature.
+          Store sealed bottles away from extreme heat. Once delivered, storage
+          and use follow the product label.
         </p>
       </section>
 
       <p className="mt-12 border-t border-ink-200 pt-6 text-xs leading-relaxed text-ink-500">
-        <strong className="text-ink-600">Research Use Only:</strong> All
-        shipments contain reference materials intended strictly for in-vitro
-        laboratory research. They are not drugs, supplements, food, or
-        medical devices, and are not intended for human or veterinary use.
-        See the{' '}
+        <strong className="text-ink-600">Cosmetic products:</strong> Shipments
+        contain hair care cosmetics for external use. Not intended to diagnose,
+        treat, cure, or prevent any disease. See the{' '}
         <Link to="/terms" className="underline underline-offset-2 hover:text-ink-700">
           Terms of Service
         </Link>{' '}

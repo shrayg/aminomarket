@@ -23,7 +23,7 @@ export function Logo({
   const img = (
     <img
       src={src}
-      alt="Amino Market"
+      alt="Strand Labs"
       className={`${heights[height]} w-auto shrink-0 object-contain object-left`}
       style={{ imageRendering: 'auto' }}
       draggable={false}
@@ -38,7 +38,7 @@ export function Logo({
       <span
         className={`font-sans text-lg font-extrabold tracking-tight ${textColor}`}
       >
-        amino market
+        Strand Labs
       </span>
     </span>
   ) : (
@@ -49,7 +49,7 @@ export function Logo({
     return (
       <Link
         to="/"
-        aria-label="Amino Market — Home"
+        aria-label="Strand Labs — Home"
         className={`inline-flex items-center ${className}`}
       >
         {content}

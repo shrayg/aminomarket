@@ -17,7 +17,6 @@ type AnalyticsPayload = {
   metadata?: Record<string, string | number | boolean>
 }
 
-const CONSENT_KEY = 'amp-age-verified'
 const VISITOR_KEY = 'amp-analytics-visitor'
 const SESSION_KEY = 'amp-analytics-session'
 const SESSION_STARTED_KEY = 'amp-analytics-started'
@@ -40,7 +39,8 @@ function getOrCreate(storage: Storage, key: string, prefix: string) {
 }
 
 export function hasAnalyticsConsent() {
-  return typeof window !== 'undefined' && localStorage.getItem(CONSENT_KEY) === 'true'
+  // Public storefront no longer requires an age / research gate.
+  return typeof window !== 'undefined'
 }
 
 export function getAnalyticsSessionId() {

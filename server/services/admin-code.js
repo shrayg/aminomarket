@@ -57,12 +57,12 @@ export async function postCodeToDiscord(codeInfo) {
 
   const expireUnix = Math.floor(new Date(codeInfo.validTo).getTime() / 1000)
   const body = {
-    username: 'aminomarket admin',
+    username: 'Strand Labs admin',
     embeds: [
       {
         title: 'Hourly admin access code',
         description: `\`\`\`\n${codeInfo.code}\n\`\`\``,
-        color: 0xc9a227,
+        color: 0xa78bfa,
         fields: [
           {
             name: 'Valid until',

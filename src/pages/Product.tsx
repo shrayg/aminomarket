@@ -147,7 +147,7 @@ export function Product() {
 
           <div className="mt-4 flex items-center gap-2 text-sm text-ink-500">
             <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
-            99% Purity · Third-Party Tested · Research Use Only
+            In stock · Cosmetic hair care · External use only
           </div>
 
           {inStock ? (

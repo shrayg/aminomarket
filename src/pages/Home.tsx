@@ -9,26 +9,35 @@ import { NewsletterForm } from '@/components/NewsletterForm'
 
 const testimonials = [
   {
-    text: 'Excellent quality peptides. I ordered Ipamorelin and BPC-157, both arrived quickly and were exactly as described. The COA was included and verified.',
-    author: 'Paul',
+    text: 'The shampoo feels clean without stripping. Hair looks healthier after a couple weeks of use.',
+    author: 'Alex',
     title: 'Verified Buyer',
   },
   {
-    text: 'Fast shipping and great customer service. My order arrived within 3 days. The product quality is top-notch. Highly recommend.',
-    author: 'Mike Johnson',
-    title: 'Research Scientist',
+    text: 'Light scent, rinses well, and the copper peptide formula is an easy everyday swap.',
+    author: 'Jordan',
+    title: 'Verified Buyer',
   },
   {
-    text: 'Outstanding purity levels. Been ordering from Aminomarket over a year. Consistently delivers excellent results in our lab.',
-    author: 'Sarah Chen',
-    title: 'Lab Director',
+    text: 'Ordered the 2-pack. Consistent quality and shipping was fast.',
+    author: 'Sam',
+    title: 'Verified Buyer',
   },
 ]
 
 const faqs = [
-  { q: 'Are your peptides pure and safe?', a: 'Each batch is produced in a U.S.-based facility and tested by third-party laboratories for purity and identity. COAs are available upon request.' },
-  { q: 'How should I store my peptides?', a: 'Store in a cool, dry place. Once reconstituted, refrigerate or freeze depending on the peptide. Consult research protocols.' },
-  { q: 'Are your peptides for research or human use?', a: 'All peptides are strictly for laboratory research use only and are not intended for human or veterinary use.' },
+  {
+    q: 'What is GHK-Cu shampoo?',
+    a: 'Our hair care shampoo is formulated with GHK-Cu (copper peptide) for everyday cleansing and scalp comfort. It is a cosmetic shampoo, not a drug.',
+  },
+  {
+    q: 'How do I use it?',
+    a: 'Wet hair, apply a small amount, massage into scalp and hair, then rinse thoroughly. Use as often as your routine needs.',
+  },
+  {
+    q: 'Who is it for?',
+    a: 'Anyone looking for a modern peptide shampoo for daily hair care. Not intended to diagnose, treat, cure, or prevent any disease.',
+  },
 ]
 
 export function Home() {
@@ -40,29 +49,27 @@ export function Home() {
 
   return (
     <div>
-      {/* Hero - amino market + carousel */}
       <section className="relative bg-[#1A1B1F] text-white">
         <div className="noise absolute inset-0 pointer-events-none" />
         <div className="relative mx-auto grid max-w-7xl grid-cols-1 lg:grid-cols-2">
           <div className="flex flex-col justify-center px-6 py-12 text-left md:px-12 lg:py-16">
             <p className="mb-5 font-sans text-xs font-medium uppercase tracking-[0.25em] text-ink-400">
-              99% PURITY GUARANTEED
+              COPPER PEPTIDE HAIR CARE
             </p>
-            <h1 className="font-sans text-4xl font-extrabold leading-[1.2] tracking-tight text-white md:text-5xl">
-              amino market
+            <h1 className="font-sans text-4xl font-extrabold leading-[1.2] tracking-tight text-[#c4b5fd] md:text-5xl">
+              Strand Labs
             </h1>
             <p className="mt-6 max-w-md font-sans text-base leading-relaxed text-ink-300">
-              Premium-grade research peptides backed by science. Trusted by
-              scientists and institutions advancing biochemistry, longevity, and
-              cellular discovery.
+              GHK-Cu peptide shampoo for everyday hair care. Clean rinse,
+              lightweight feel, made for modern scalp and strand routines.
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
               {catalogVisible ? (
                 <Link
-                  to="/shop"
+                  to="/product/ghk-cu-shampoo"
                   className="inline-flex items-center border-2 border-[#c9a227] bg-[#c9a227] px-8 py-3.5 font-semibold text-ink-950 transition hover:bg-[#d4af37]"
                 >
-                  Shop Peptides
+                  Shop GHK-Cu Shampoo
                 </Link>
               ) : (
                 <Link
@@ -80,10 +87,9 @@ export function Home() {
         </div>
       </section>
 
-      {/* Trust - minimal, no emoji */}
       <section className="border-b border-ink-200 bg-white py-6">
         <div className="mx-auto flex max-w-4xl flex-wrap justify-center gap-x-12 gap-y-2 px-6 text-center text-[13px] font-medium uppercase tracking-widest text-ink-500">
-          {['99% Purity', 'Lab Tested', 'Free Shipping $200+', 'Secure Payment', '24/7 Support'].map(
+          {['GHK-Cu Formula', 'Everyday Hair Care', 'Free Shipping $200+', 'Secure Payment', '24/7 Support'].map(
             (b) => (
               <span key={b}>{b}</span>
             )
@@ -91,16 +97,15 @@ export function Home() {
         </div>
       </section>
 
-      {/* Featured - asymmetric grid */}
       {catalogVisible && (
       <section className="px-6 py-16">
         <div className="mx-auto max-w-7xl">
           <div className="mb-16">
             <p className="font-sans text-xs font-medium uppercase tracking-[0.2em] text-ink-400">
-              Our Collection
+              Featured
             </p>
             <h2 className="mt-3 font-sans text-display-sm font-bold tracking-tight text-ink-900">
-              Featured Products
+              GHK-Cu Peptide Shampoo
             </h2>
           </div>
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
@@ -116,14 +121,13 @@ export function Home() {
       </section>
       )}
 
-      {/* Best Sellers */}
-      {catalogVisible && (
+      {catalogVisible && bestSellers.length > 1 && (
       <section className="border-t border-ink-200 bg-ink-50/50 px-6 py-16">
         <div className="mx-auto max-w-7xl">
           <div className="mb-12 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="font-sans text-xs font-medium uppercase tracking-[0.2em] text-ink-500">
-                Top Rated
+                Shop
               </p>
               <h2 className="mt-2 font-sans text-display-sm font-bold tracking-tight text-ink-900">
                 Best Sellers
@@ -145,12 +149,11 @@ export function Home() {
       </section>
       )}
 
-      {/* Popular */}
-      {catalogVisible && (
+      {catalogVisible && popular.length > 1 && (
       <section className="px-6 py-16">
         <div className="mx-auto max-w-7xl">
           <p className="font-sans text-xs font-medium uppercase tracking-[0.2em] text-ink-500">
-            Trending Now
+            Collection
           </p>
           <h2 className="mt-3 font-sans text-display-sm font-bold tracking-tight text-ink-900">
             Popular Products
@@ -168,8 +171,7 @@ export function Home() {
       </section>
       )}
 
-      {/* Categories - cleaner cards */}
-      {catalogVisible && (
+      {catalogVisible && categories.length > 1 && (
       <section className="border-t border-ink-200 bg-ink-50/50 px-6 py-16">
         <div className="mx-auto max-w-7xl">
           <h2 className="font-sans text-display-sm font-bold tracking-tight text-ink-900">
@@ -198,20 +200,19 @@ export function Home() {
       </section>
       )}
 
-      {/* Why Aminomarket */}
       <section className="px-6 py-16">
         <div className="mx-auto max-w-7xl">
           <h2 className="font-sans text-display-sm font-bold tracking-tight text-ink-900">
-            Industry-Leading Quality
+            Built for everyday hair care
           </h2>
           <p className="mt-4 max-w-2xl font-serif text-ink-600">
-            Every product undergoes rigorous third-party testing for 99%+ purity.
+            A straightforward copper-peptide shampoo with a clean formula and simple routine.
           </p>
           <div className="mt-16 grid gap-16 md:grid-cols-3">
             {[
-              { title: 'Third-Party Lab Tested', desc: 'Every batch independently verified for purity and quality.' },
-              { title: 'Fast & Discreet Shipping', desc: 'Orders ship within 24 hours in unmarked packaging.' },
-              { title: 'Money-Back Guarantee', desc: 'Full refund within 30 days if not satisfied.' },
+              { title: 'GHK-Cu formula', desc: 'Copper peptide shampoo crafted for daily cleansing and scalp comfort.' },
+              { title: 'Fast shipping', desc: 'Orders ship promptly with tracking and care.' },
+              { title: 'Easy to use', desc: 'Wet, lather, rinse — no complicated regimen.' },
             ].map((item) => (
               <div key={item.title}>
                 <h3 className="font-sans text-lg font-semibold text-ink-900">
@@ -224,15 +225,14 @@ export function Home() {
         </div>
       </section>
 
-      {/* Testimonials - editorial, no stars */}
       <section className="relative bg-ink-950 px-6 py-16 text-white">
         <div className="noise absolute inset-0 pointer-events-none" />
         <div className="relative mx-auto max-w-7xl">
           <p className="font-sans text-xs font-medium uppercase tracking-[0.2em] text-ink-500">
-            10K+ Happy Researchers
+            Customer notes
           </p>
           <h2 className="mt-3 font-sans text-display-sm font-bold tracking-tight text-white">
-            What Researchers Say
+            What people say
           </h2>
           <div className="mt-16 grid gap-12 md:grid-cols-3">
             {testimonials.map((t) => (
@@ -252,7 +252,6 @@ export function Home() {
         </div>
       </section>
 
-      {/* FAQs */}
       <section className="border-t border-ink-200 px-6 py-16">
         <div className="mx-auto max-w-2xl">
           <h2 className="font-sans text-display-sm font-bold tracking-tight text-ink-900">
@@ -276,7 +275,6 @@ export function Home() {
         </div>
       </section>
 
-      {/* Newsletter */}
       <section className="relative bg-ink-950 px-6 py-16 text-white">
         <div className="noise absolute inset-0 pointer-events-none" />
         <div className="relative mx-auto max-w-xl text-center">
@@ -284,7 +282,7 @@ export function Home() {
             Stay Updated
           </h2>
           <p className="mt-4 font-serif text-ink-300">
-            Exclusive deals, new products, research updates.
+            Early access to restocks, offers, and new hair care drops.
           </p>
           <div className="mt-10 flex justify-center">
             <NewsletterForm />

@@ -2,14 +2,22 @@ export function COA() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-16">
       <h1 className="font-sans text-3xl font-bold text-ink-900">
-        Certificates of Analysis (COA)
+        Product documentation
       </h1>
       <p className="mt-6 text-ink-600">
-        Every batch is independently tested by third-party laboratories for purity and identity.
-        COAs are available for qualified research professionals.
+        Strand Labs GHK-Cu Peptide Shampoo is a cosmetic hair care product.
+        Ingredient and batch details are available on request for orders that
+        need them.
       </p>
       <p className="mt-6 text-ink-500">
-        PLACEHOLDER: Add batch lookup, product COA links, or PDF hosting.
+        Email{' '}
+        <a
+          href="mailto:aminomarketsupport@gmail.com"
+          className="text-ink-900 underline underline-offset-2 hover:text-accent-dark"
+        >
+          aminomarketsupport@gmail.com
+        </a>{' '}
+        with your order number if you need documentation.
       </p>
     </div>
   )

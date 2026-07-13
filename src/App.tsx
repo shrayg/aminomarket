@@ -1,6 +1,5 @@
 import { Routes, Route } from 'react-router-dom'
 import { Layout } from './components/Layout'
-import { AgeVerification } from './components/AgeVerification'
 import { Home } from './pages/Home'
 import { Shop } from './pages/Shop'
 import { Product } from './pages/Product'
@@ -65,7 +64,6 @@ function App() {
         </Route>
         <Route path="/admin" element={<Admin />} />
       </Routes>
-      <AgeVerification />
     </>
   )
 }

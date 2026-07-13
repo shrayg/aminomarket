@@ -11,7 +11,7 @@ import {
   parseBatchFromNote,
   saveFulfillment,
 } from '../services/analytics-store.js'
-import { getCurrentAccessCode } from '../services/admin-code.js'
+import { getCurrentAccessCode, postCodeToDiscord } from '../services/admin-code.js'
 import { postManufactureBatch } from '../services/manufacture-discord.js'
 import { approveAffiliate, denyAffiliate } from '../services/affiliate.js'
 import { getSupabase, throwIfSupabaseError } from '../lib/supabase.js'
@@ -483,13 +483,12 @@ router.get('/code', requireAdmin, (_req, res) => {
   res.json(getCurrentAccessCode())
 })
 
-// Discord admin-code broadcasts are disabled. The hourly pg_cron job that
-// called this endpoint has been unscheduled; manual/cron hits are no-ops.
+// Hit by an external hourly cron (Supabase pg_cron) authenticated with
+// CRON_SECRET via the Authorization header.
 async function notifyHandler(_req, res) {
-  res.json({
-    disabled: true,
-    delivery: { sent: false, reason: 'Discord admin code broadcasts are disabled' },
-  })
+  const codeInfo = getCurrentAccessCode()
+  const delivery = await postCodeToDiscord(codeInfo)
+  res.json({ ...codeInfo, delivery })
 }
 
 router.get('/code/notify', cronOrAdmin, notifyHandler)

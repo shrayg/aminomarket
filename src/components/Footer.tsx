@@ -10,9 +10,8 @@ export function Footer() {
           <div className="lg:col-span-1">
             <Logo variant="light" height="lg" />
             <p className="mt-4 text-sm leading-relaxed text-ink-600">
-              A research-focused supplier of high-purity reference materials for
-              laboratory and in-vitro use only. Transparent COAs, consistent
-              quality, responsive support.
+              Copper-peptide hair care for everyday routines. Clean formula,
+              responsive support, straightforward shipping.
             </p>
           </div>
           <div>
@@ -107,12 +106,12 @@ export function Footer() {
 
         <div className="mt-16 border-t border-ink-200 pt-8">
           <p className="text-xs leading-relaxed text-ink-500">
-            <strong className="text-ink-600">Disclaimer:</strong> All products
-            are for laboratory research and development use only. Not intended
-            for human or animal consumption. Not evaluated by the FDA.
+            <strong className="text-ink-600">Disclaimer:</strong> Products are
+            cosmetic hair care for external use. Not intended to diagnose,
+            treat, cure, or prevent any disease.
           </p>
           <p className="mt-4 text-xs text-ink-500">
-            © {new Date().getFullYear()} Amino Market. All rights reserved.
+            © {new Date().getFullYear()} Strand Labs. All rights reserved.
           </p>
         </div>
       </div>

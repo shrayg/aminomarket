@@ -45,13 +45,12 @@ export function Contact() {
       </p>
 
       <p className="mt-4 text-sm text-ink-500">
-        Heads-up: we cannot provide dosing, reconstitution, administration,
-        or any therapeutic guidance. All products are supplied for in-vitro
-        laboratory research only. See the{' '}
+        Cosmetics-only shop: we do not give medical advice. For order and
+        product questions, see the{' '}
         <Link to="/faq" className="text-ink-900 underline underline-offset-2 hover:text-accent-dark">
           FAQ
         </Link>{' '}
-        for self-serve answers to most order questions.
+        or message us below.
       </p>
 
       <div className="mt-10 grid gap-4 md:grid-cols-2">

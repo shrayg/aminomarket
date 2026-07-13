@@ -463,7 +463,7 @@ export function Checkout() {
             className={`space-y-3 rounded-2xl border border-ink-200 bg-white p-6 transition ${user ? '' : 'opacity-60'}`}
           >
             <legend className="px-2 font-sans text-base font-semibold text-ink-900">
-              Research Use Only acknowledgment
+              Order acknowledgment
             </legend>
             <label className="flex items-start gap-3 text-sm text-ink-700">
               <input
@@ -474,15 +474,16 @@ export function Checkout() {
                 className="mt-1 rounded border-ink-300"
               />
               <span>
-                I confirm I am 21 or older, am acquiring these materials only for in-vitro
-                laboratory research, and agree to the{' '}
+                I agree to the{' '}
                 <Link to="/terms" className="underline underline-offset-2 hover:text-accent-dark">
                   Terms of Service
                 </Link>{' '}
                 and{' '}
                 <Link to="/privacy" className="underline underline-offset-2 hover:text-accent-dark">
                   Privacy Policy
-                </Link>.
+                </Link>
+                , and I understand Strand Labs products are cosmetic hair care
+                for external use only.
               </span>
             </label>
           </fieldset>

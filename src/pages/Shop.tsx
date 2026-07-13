@@ -390,8 +390,8 @@ export function Shop() {
       <div className="mt-5 flex gap-3 border-l-4 border-accent bg-ink-50 px-4 py-3 text-sm leading-relaxed text-ink-600">
         <FlaskConical className="mt-0.5 h-5 w-5 shrink-0 text-accent-dark" />
         <p>
-          Research classifications organize the catalog for qualified research use only. They do
-          not describe intended human use, treatment outcomes, or dosing guidance.
+          Strand Labs sells cosmetic hair care. Products are for external use
+          and are not intended to diagnose, treat, cure, or prevent any disease.
         </p>
       </div>
 

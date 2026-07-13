@@ -46,22 +46,10 @@ export function normalizeProduct(p: Record<string, unknown>): Product {
 }
 
 export const categories = [
-  { name: 'Research Peptides', slug: 'research-peptides', desc: '99% purity lab-tested compounds' },
-  { name: 'Research Formulations', slug: 'research-formulations', desc: 'Advanced formulations' },
-  { name: 'Accessories', slug: 'accessories', desc: '' },
-  { name: 'Pre-Sale', slug: 'pre-sale', desc: '' },
+  { name: 'Hair Care', slug: 'hair-care', desc: 'Peptide shampoo and everyday hair care' },
 ]
 
-export const researchAreas = [
-  { name: 'Metabolic research', slug: 'metabolic-research' },
-  { name: 'Tissue response research', slug: 'tissue-response-research' },
-  { name: 'Growth hormone pathway research', slug: 'growth-hormone-pathway-research' },
-  { name: 'Cellular metabolism research', slug: 'cellular-metabolism-research' },
-  { name: 'Neuro research', slug: 'neuro-research' },
-  { name: 'Skin & pigmentation research', slug: 'skin-pigmentation-research' },
-  { name: 'Reproductive research', slug: 'reproductive-research' },
-  { name: 'Lab supplies', slug: 'lab-supplies' },
-]
+export const researchAreas = [] as { name: string; slug: string }[]
 
 export const staticProducts = productCatalog as Product[]
 

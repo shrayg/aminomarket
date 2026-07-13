@@ -7,7 +7,7 @@ export function Returns() {
         Return &amp; Refund Policy
       </h1>
       <p className="mt-3 text-sm uppercase tracking-wider text-ink-400">
-        Effective for all orders placed through aminomarket.shop
+        Effective for all orders placed through Strand Labs
       </p>
 
       <section className="mt-10 leading-relaxed text-ink-600">
@@ -182,14 +182,13 @@ export function Returns() {
           <li>Damage claims submitted after the 48-hour post-delivery window.</li>
           <li>Damage claims that do not include photographs.</li>
           <li>
-            Products that have been opened, reconstituted, or used in any
-            research workflow.
+            Products that have been opened or used.
           </li>
         </ul>
       </section>
 
       <p className="mt-12 border-t border-ink-200 pt-6 text-xs leading-relaxed text-ink-500">
-        This policy applies to research-material purchases only. For order or
+        This policy applies to Strand Labs purchases. For order or
         delivery timelines, see our{' '}
         <Link to="/shipping" className="underline underline-offset-2 hover:text-ink-700">
           Shipping &amp; Delivery Policy
