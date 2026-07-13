@@ -34,7 +34,7 @@ export function Header() {
       </div>
 
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4">
-        <Logo variant="light" height="md" withText />
+        <Logo variant="light" height="md" />
 
         <nav className="hidden items-center gap-8 lg:flex">
           {navLinks.map((link) => (
@@ -67,7 +67,7 @@ export function Header() {
           >
             <ShoppingCart className="h-5 w-5" />
             {count > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-ink-900 px-1 text-[10px] font-semibold text-white">
+              <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-violet px-1 text-[10px] font-semibold text-white">
                 {count}
               </span>
             )}

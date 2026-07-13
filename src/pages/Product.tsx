@@ -82,7 +82,7 @@ export function Product() {
 
       <div className="grid gap-16 lg:grid-cols-2">
         <div>
-          <div className="aspect-square overflow-hidden rounded-2xl bg-gradient-to-br from-ink-100 to-ink-50">
+          <div className="aspect-square overflow-hidden rounded-2xl bg-gradient-to-br from-brand-mist via-ink-50 to-brand-lavender/30">
             {displayImage ? (
               <img
                 src={displayImage}

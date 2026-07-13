@@ -4,7 +4,7 @@ import { isPublicCatalogVisible } from '@/lib/catalog-visibility'
 import { categories } from '@/data/products'
 import { heroSlides } from '@/data/heroCarousel'
 import { ProductCard } from '@/components/ProductCard'
-import { HeroCarousel } from '@/components/HeroCarousel'
+import { HeroShowcase } from '@/components/HeroShowcase'
 import { NewsletterForm } from '@/components/NewsletterForm'
 
 const testimonials = [
@@ -49,53 +49,9 @@ export function Home() {
 
   return (
     <div>
-      <section className="relative bg-[#1A1B1F] text-white">
-        <div className="noise absolute inset-0 pointer-events-none" />
-        <div className="relative mx-auto grid max-w-7xl grid-cols-1 lg:grid-cols-2">
-          <div className="flex flex-col justify-center px-6 py-12 text-left md:px-12 lg:py-16">
-            <p className="mb-5 font-sans text-xs font-medium uppercase tracking-[0.25em] text-ink-400">
-              COPPER PEPTIDE HAIR CARE
-            </p>
-            <h1 className="font-sans text-4xl font-extrabold leading-[1.2] tracking-tight text-[#c4b5fd] md:text-5xl">
-              Strand Labs
-            </h1>
-            <p className="mt-6 max-w-md font-sans text-base leading-relaxed text-ink-300">
-              Blue copper peptide shampoo and conditioner for everyday hair care.
-              Clean formula, matching pair, made for modern scalp and strand routines.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-4">
-              {catalogVisible ? (
-                <>
-                  <Link
-                    to="/product/blue-copper-shampoo"
-                    className="inline-flex items-center border-2 border-[#c9a227] bg-[#c9a227] px-8 py-3.5 font-semibold text-ink-950 transition hover:bg-[#d4af37]"
-                  >
-                    Shop Shampoo
-                  </Link>
-                  <Link
-                    to="/product/blue-copper-conditioner"
-                    className="inline-flex items-center border-2 border-white/40 px-8 py-3.5 font-semibold text-white transition hover:border-white hover:bg-white/10"
-                  >
-                    Shop Conditioner
-                  </Link>
-                </>
-              ) : (
-                <Link
-                  to="/contact"
-                  className="inline-flex items-center border-2 border-[#c9a227] bg-[#c9a227] px-8 py-3.5 font-semibold text-ink-950 transition hover:bg-[#d4af37]"
-                >
-                  Contact Us
-                </Link>
-              )}
-            </div>
-          </div>
-          <div className="relative min-h-[420px]">
-            <HeroCarousel slides={heroSlides} />
-          </div>
-        </div>
-      </section>
+      <HeroShowcase slides={heroSlides} catalogVisible={catalogVisible} />
 
-      <section className="border-b border-ink-200 bg-white py-6">
+      <section className="border-b border-brand-lavender/30 bg-gradient-to-r from-brand-mist/40 via-white to-brand-lavender/20 py-6">
         <div className="mx-auto flex max-w-4xl flex-wrap justify-center gap-x-12 gap-y-2 px-6 text-center text-[13px] font-medium uppercase tracking-widest text-ink-500">
           {['GHK-Cu Formula', 'Everyday Hair Care', 'Free Shipping $200+', 'Secure Payment', '24/7 Support'].map(
             (b) => (
@@ -233,10 +189,11 @@ export function Home() {
         </div>
       </section>
 
-      <section className="relative bg-ink-950 px-6 py-16 text-white">
+      <section className="relative overflow-hidden bg-gradient-to-br from-ink-950 via-[#1a1530] to-ink-950 px-6 py-16 text-white">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(196,181,253,0.18),transparent_45%)]" />
         <div className="noise absolute inset-0 pointer-events-none" />
         <div className="relative mx-auto max-w-7xl">
-          <p className="font-sans text-xs font-medium uppercase tracking-[0.2em] text-ink-500">
+          <p className="font-sans text-xs font-medium uppercase tracking-[0.2em] text-brand-lavender/70">
             Customer notes
           </p>
           <h2 className="mt-3 font-sans text-display-sm font-bold tracking-tight text-white">
@@ -246,7 +203,7 @@ export function Home() {
             {testimonials.map((t) => (
               <blockquote
                 key={t.author}
-                className="border-l-2 border-accent pl-6"
+                className="border-l-2 border-brand-lavender pl-6"
               >
                 <p className="font-serif text-lg leading-relaxed text-ink-200">
                   &quot;{t.text}&quot;
@@ -267,7 +224,7 @@ export function Home() {
           </h2>
           <p className="mt-4 font-serif text-ink-600">
             Still have questions?{' '}
-            <Link to="/contact" className="font-semibold text-ink-900 underline underline-offset-4 hover:text-accent-dark">
+            <Link to="/contact" className="font-semibold text-ink-900 underline underline-offset-4 hover:text-brand-violet">
               Contact us
             </Link>
             .
@@ -283,10 +240,11 @@ export function Home() {
         </div>
       </section>
 
-      <section className="relative bg-ink-950 px-6 py-16 text-white">
+      <section className="relative overflow-hidden bg-gradient-to-br from-ink-950 via-[#1a1530] to-ink-950 px-6 py-16 text-white">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_bottom,rgba(196,181,253,0.16),transparent_40%)]" />
         <div className="noise absolute inset-0 pointer-events-none" />
         <div className="relative mx-auto max-w-xl text-center">
-          <h2 className="font-sans text-2xl font-bold tracking-tight text-white">
+          <h2 className="font-sans text-2xl font-bold tracking-tight text-brand-lavender">
             Stay Updated
           </h2>
           <p className="mt-4 font-serif text-ink-300">
