@@ -1,46 +1,24 @@
 ---
-description: Announcement bar copy policy for the storefront header
+description: Header navigation policy for Strand Labs storefront
 globs: src/components/Header.tsx
 alwaysApply: false
 ---
 
-# Announcement bar (top of storefront)
+# Header navigation
 
-The dark bar at the top of `Header.tsx` is owner-curated promotional copy. Do
-not add seasonal text, "Important Update" links, free-shipping callouts, or
-extra promos without an explicit request.
+The dark announcement bar has been **removed**. Do not reintroduce it unless
+the owner explicitly asks for a promo strip again.
 
-## Required contents (current era)
+## Desktop nav
 
-1. Logo (left) — keep as-is
-2. `Launch Week: 20% Off` — the only promo line allowed right now
-3. `Track Order` link → `/track-order`
-4. `Support` link → `/contact`
+Primary links: Home, About Us, Shop, COA.
 
-Track Order and Support must ALWAYS be present in the bar regardless of which
-promo is active.
+**Support** is a hover-only label (not a clickable route). On hover it reveals:
 
-## Reference
+1. Contact Us → `/contact`
+2. Track Order → `/track-order`
+3. Support → `/faq`
 
-```tsx
-<div className="bg-ink-950 px-4 py-3">
-  <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-4 gap-y-2 text-center text-sm leading-normal text-white/95">
-    <Logo variant="dark" height="sm" />
-    <span>Launch Week: 20% Off</span>
-    <span className="hidden sm:inline">·</span>
-    <Link to="/track-order" className="underline decoration-white/60 underline-offset-2 hover:decoration-white">
-      Track Order
-    </Link>
-    <Link to="/contact" className="underline decoration-white/60 underline-offset-2 hover:decoration-white">
-      Support
-    </Link>
-  </div>
-</div>
-```
+## Mobile
 
-## When the owner asks to change the promo
-
-- Replace the `Launch Week: 20% Off` span only.
-- Keep the Logo, Track Order link, and Support link untouched.
-- Do not reintroduce Valentine's / BOGO / "Important Update" copy unless
-  explicitly requested.
+Support expands as an accordion to the same three links.

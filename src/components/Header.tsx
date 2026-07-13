@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ShoppingCart, Menu, User, Search } from 'lucide-react'
+import { ShoppingCart, Menu, User, Search, ChevronDown } from 'lucide-react'
 import { Logo } from './Logo'
 import { useCartStore } from '@/store/cart'
 
@@ -9,30 +9,21 @@ const navLinks = [
   { href: '/about', label: 'About Us' },
   { href: '/shop', label: 'Shop' },
   { href: '/coa', label: 'COA' },
+]
+
+const supportLinks = [
   { href: '/contact', label: 'Contact Us' },
+  { href: '/track-order', label: 'Track Order' },
+  { href: '/faq', label: 'Support' },
 ]
 
 export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [mobileSupportOpen, setMobileSupportOpen] = useState(false)
   const count = useCartStore((s) => s.getCount())
 
   return (
     <header className="sticky top-0 z-50 border-b border-ink-200/80 bg-white/95 backdrop-blur-md">
-      {/* Announcement bar */}
-      <div className="bg-ink-950 px-4 py-3">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-4 gap-y-2 text-center text-sm leading-normal text-white/95">
-          <Logo variant="dark" height="sm" />
-          <span>Blue Copper Peptide Hair Care</span>
-          <span className="hidden sm:inline">·</span>
-          <Link to="/track-order" className="underline decoration-white/60 underline-offset-2 hover:decoration-white">
-            Track Order
-          </Link>
-          <Link to="/contact" className="underline decoration-white/60 underline-offset-2 hover:decoration-white">
-            Support
-          </Link>
-        </div>
-      </div>
-
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4">
         <Logo variant="light" height="md" />
 
@@ -46,6 +37,29 @@ export function Header() {
               {link.label}
             </Link>
           ))}
+
+          <div className="group relative">
+            <span
+              className="inline-flex cursor-default items-center gap-1 text-sm font-medium text-ink-600 transition group-hover:text-ink-900"
+              aria-haspopup="true"
+            >
+              Support
+              <ChevronDown className="h-3.5 w-3.5 transition group-hover:rotate-180" />
+            </span>
+            <div className="invisible absolute left-1/2 top-full z-50 w-44 -translate-x-1/2 pt-3 opacity-0 transition group-hover:visible group-hover:opacity-100">
+              <div className="border border-ink-200 bg-white py-2 shadow-lg shadow-ink-900/10">
+                {supportLinks.map((link) => (
+                  <Link
+                    key={link.href}
+                    to={link.href}
+                    className="block px-4 py-2.5 text-sm text-ink-600 transition hover:bg-brand-lavender/15 hover:text-ink-900"
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
         </nav>
 
         <div className="flex items-center gap-3">
@@ -75,6 +89,8 @@ export function Header() {
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
             className="rounded-full p-2 text-ink-600 lg:hidden"
+            aria-expanded={mobileOpen}
+            aria-label="Open menu"
           >
             <Menu className="h-5 w-5" />
           </button>
@@ -94,6 +110,34 @@ export function Header() {
                 {link.label}
               </Link>
             ))}
+            <button
+              type="button"
+              className="flex w-full items-center justify-between px-4 py-3 text-left text-ink-600 hover:bg-ink-50"
+              onClick={() => setMobileSupportOpen((open) => !open)}
+              aria-expanded={mobileSupportOpen}
+            >
+              Support
+              <ChevronDown
+                className={`h-4 w-4 transition ${mobileSupportOpen ? 'rotate-180' : ''}`}
+              />
+            </button>
+            {mobileSupportOpen && (
+              <div className="mb-1 ml-3 border-l border-ink-200 pl-2">
+                {supportLinks.map((link) => (
+                  <Link
+                    key={link.href}
+                    to={link.href}
+                    className="block px-4 py-2.5 text-sm text-ink-600 hover:bg-ink-50"
+                    onClick={() => {
+                      setMobileOpen(false)
+                      setMobileSupportOpen(false)
+                    }}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
+            )}
           </nav>
         </div>
       )}
