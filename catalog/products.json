@@ -3,7 +3,7 @@
     "id": "blue-copper-shampoo",
     "name": "Blue Copper Peptide Shampoo",
     "slug": "blue-copper-shampoo",
-    "price": 14.99,
+    "price": 19.99,
     "image": "/products/blue-copper-shampoo-01.png",
     "images": [
       "/products/blue-copper-shampoo-01.png",
@@ -21,7 +21,7 @@
       {
         "id": "blue-copper-shampoo-500ml",
         "dose": "500ml",
-        "price": 14.99,
+        "price": 19.99,
         "image": "/products/blue-copper-shampoo-01.png",
         "inStock": true
       }
@@ -31,7 +31,7 @@
     "id": "blue-copper-conditioner",
     "name": "Blue Copper Peptide Conditioner",
     "slug": "blue-copper-conditioner",
-    "price": 14.99,
+    "price": 19.99,
     "image": "/products/blue-copper-conditioner-02.png",
     "images": [
       "/products/blue-copper-conditioner-02.png",
@@ -49,7 +49,7 @@
       {
         "id": "blue-copper-conditioner-500ml",
         "dose": "500ml",
-        "price": 14.99,
+        "price": 19.99,
         "image": "/products/blue-copper-conditioner-02.png",
         "inStock": true
       }
