@@ -34,7 +34,8 @@ export function Register() {
       saveSession(token, user)
       navigate('/account')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Registration failed')
+      const message = err instanceof Error ? err.message : 'Registration failed'
+      setError(message)
     } finally {
       setLoading(false)
     }
@@ -110,7 +111,26 @@ export function Register() {
             <span>Text me about discounts and promotions (SMS, reply STOP to opt out).</span>
           </label>
         </div>
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && (
+          <div className="space-y-2 text-sm text-red-600">
+            <p>{error}</p>
+            {(error.toLowerCase().includes('already exists') || error.toLowerCase().includes('log in')) && (
+              <p className="text-ink-600">
+                <Link
+                  to="/login"
+                  state={{ email }}
+                  className="font-medium text-ink-900 underline underline-offset-2 hover:text-accent-dark"
+                >
+                  Go to login
+                </Link>
+                {' · '}
+                <Link to="/forgot-password" className="font-medium text-ink-900 underline underline-offset-2 hover:text-accent-dark">
+                  Forgot password
+                </Link>
+              </p>
+            )}
+          </div>
+        )}
         <button
           type="submit"
           disabled={loading}

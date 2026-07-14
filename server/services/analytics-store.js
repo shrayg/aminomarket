@@ -220,29 +220,64 @@ export async function markAnalyticsConversion(sessionId) {
   )
 }
 
+async function fetchAllRows(buildQuery) {
+  const pageSize = 1000
+  const rows = []
+  for (let from = 0; ; from += pageSize) {
+    const { data, error } = await buildQuery().range(from, from + pageSize - 1)
+    throwIfSupabaseError(error)
+    const page = data || []
+    rows.push(...page)
+    if (page.length < pageSize) break
+  }
+  return rows
+}
+
 export async function listAnalytics(days = 30) {
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
-  return withFallback(
-    async () => {
-      const db = getSupabase()
-      const [sessionsResult, eventsResult] = await Promise.all([
-        db.from('analytics_sessions').select('*').gte('started_at', since.toISOString()).order('started_at', { ascending: false }).limit(10000),
-        db.from('analytics_events').select('*').gte('created_at', since.toISOString()).order('created_at', { ascending: false }).limit(20000),
-      ])
-      throwIfSupabaseError(sessionsResult.error)
-      throwIfSupabaseError(eventsResult.error)
-      return {
-        sessions: sessionsResult.data.map(mapSession),
-        events: eventsResult.data.map(mapEvent),
-        storageMode: 'database',
-      }
-    },
-    () => ({
+  if (!isSupabaseConfigured) {
+    return {
       sessions: [...memorySessions.values()].filter((session) => session.startedAt >= since),
       events: memoryEvents.filter((event) => event.createdAt >= since),
       storageMode: 'memory',
-    })
-  )
+    }
+  }
+
+  // Dashboard reads must not silently fall into empty in-process memory on
+  // multi-instance serverless — that made every chart look broken.
+  const sinceIso = since.toISOString()
+  let lastError = null
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      const db = getSupabase()
+      const [sessions, events] = await Promise.all([
+        fetchAllRows(() =>
+          db
+            .from('analytics_sessions')
+            .select('*')
+            .gte('started_at', sinceIso)
+            .order('started_at', { ascending: false })
+        ),
+        fetchAllRows(() =>
+          db
+            .from('analytics_events')
+            .select('*')
+            .gte('created_at', sinceIso)
+            .order('created_at', { ascending: false })
+        ),
+      ])
+      databaseAvailable = true
+      return {
+        sessions: sessions.map(mapSession),
+        events: events.map(mapEvent),
+        storageMode: 'database',
+      }
+    } catch (error) {
+      lastError = error
+      if (attempt === 0) await new Promise((resolve) => setTimeout(resolve, 250))
+    }
+  }
+  throw lastError || new Error('Could not load analytics from Supabase.')
 }
 
 export async function listFulfillments() {

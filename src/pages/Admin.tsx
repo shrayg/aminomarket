@@ -410,19 +410,21 @@ function RangeChart({
         </div>
       </div>
       <div className="relative mt-6 h-40">
-        <div className="absolute inset-0 flex items-end gap-1">
+        {/*
+          Each column must be h-full. Percentage bar heights fail under
+          flex items-end (circular content height), which collapsed every chart.
+        */}
+        <div className="absolute inset-0 flex gap-1">
           {points.map((point) => {
             const value = Number(point.value || 0)
             const label = formatBucketLabel(range, point.bucketStart)
+            const heightPct = value > 0 ? Math.max(6, (value / max) * 100) : 0
             return (
-              <div
-                key={point.bucketStart}
-                className="group flex min-w-0 flex-1 flex-col items-center justify-end"
-              >
+              <div key={point.bucketStart} className="group relative h-full min-w-0 flex-1">
                 <div
                   title={`${label}: ${formatValue(value)}`}
-                  className={`w-full min-w-1 transition group-hover:opacity-70 ${color}`}
-                  style={{ height: `${Math.max(value > 0 ? 6 : 1, (value / max) * 100)}%` }}
+                  className={`absolute bottom-0 w-full min-w-1 transition group-hover:opacity-70 ${color}`}
+                  style={{ height: `${heightPct}%` }}
                 />
               </div>
             )

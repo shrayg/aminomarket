@@ -288,15 +288,21 @@ function buildAnalyticsSummary({ sessions, events, storageMode }, metricsDays, e
   const addToCartSamples = events
     .filter((e) => e.type === 'add_to_cart')
     .map((e) => ({ ts: +new Date(e.createdAt), value: 1 }))
-  const checkoutStartSamples = events
+  const checkoutStartSamples = sessions
+    .filter((s) => s.checkoutStarted)
+    .map((s) => ({ ts: +new Date(s.startedAt), value: 1 }))
+  // Prefer explicit checkout_started events when present (richer timestamps).
+  const checkoutEventSamples = events
     .filter((e) => e.type === 'checkout_started')
     .map((e) => ({ ts: +new Date(e.createdAt), value: 1 }))
+  const checkoutSamples =
+    checkoutEventSamples.length > 0 ? checkoutEventSamples : checkoutStartSamples
 
   const earliestMs = [
     ...visitSamples,
     ...productViewSamples,
     ...addToCartSamples,
-    ...checkoutStartSamples,
+    ...checkoutSamples,
   ].reduce(
     (min, sample) => (Number.isFinite(sample.ts) && sample.ts < min ? sample.ts : min),
     Number.POSITIVE_INFINITY
@@ -312,7 +318,8 @@ function buildAnalyticsSummary({ sessions, events, storageMode }, metricsDays, e
       averageEngagedSeconds,
       productViews: eventCounts.get('product_view') || 0,
       addToCarts: eventCounts.get('add_to_cart') || 0,
-      checkoutStarts: checkoutSessionsInWindow.length,
+      checkoutStarts:
+        checkoutSessionsInWindow.length || eventCounts.get('checkout_started') || 0,
       trackedConversions: convertedSessionsInWindow.length,
     },
     daily: [...daily.values()],
@@ -321,7 +328,7 @@ function buildAnalyticsSummary({ sessions, events, storageMode }, metricsDays, e
       engagedVisits: buildRangeSeries(engagedSamples, earliestMs),
       productViews: buildRangeSeries(productViewSamples, earliestMs),
       addToCarts: buildRangeSeries(addToCartSamples, earliestMs),
-      checkoutStarts: buildRangeSeries(checkoutStartSamples, earliestMs),
+      checkoutStarts: buildRangeSeries(checkoutSamples, earliestMs),
     },
     topPaths: topEntries(paths),
     trafficSources: topEntries(traffic),
@@ -366,12 +373,26 @@ async function stripeSummary(metricsDays, seriesLookbackDays, fulfillmentById) {
     const lookbackDays = Math.max(metricsDays, seriesLookbackDays)
     const sinceLookbackMs = Date.now() - lookbackDays * DAY
     const sinceMetricsMs = Date.now() - metricsDays * DAY
-    const response = await stripe.checkout.sessions.list({
-      limit: 100,
-      created: { gte: Math.floor(sinceLookbackMs / 1000) },
-      expand: ['data.line_items'],
-    })
-    const allOrders = response.data.map((session) =>
+    const allSessions = []
+    let startingAfter = undefined
+    let hasMore = true
+    let pages = 0
+    let mayHaveMore = false
+    while (hasMore && pages < 20) {
+      const response = await stripe.checkout.sessions.list({
+        limit: 100,
+        starting_after: startingAfter,
+        created: { gte: Math.floor(sinceLookbackMs / 1000) },
+        expand: ['data.line_items'],
+      })
+      pages += 1
+      allSessions.push(...response.data)
+      hasMore = response.has_more
+      mayHaveMore = response.has_more
+      startingAfter = response.data.at(-1)?.id
+      if (!response.data.length) break
+    }
+    const allOrders = allSessions.map((session) =>
       normalizeOrder(session, fulfillmentById)
     )
     const ordersInWindow = allOrders.filter(
@@ -433,8 +454,8 @@ async function stripeSummary(metricsDays, seriesLookbackDays, fulfillmentById) {
 
     return {
       configured: true,
-      warning: response.has_more
-        ? 'Showing the most recent 100 Stripe Checkout sessions for this period.'
+      warning: mayHaveMore
+        ? 'Showing the most recent Stripe Checkout sessions for this period (pagination cap reached).'
         : null,
       orders: ordersInWindow,
       customers: [...customers.values()].sort((a, b) => b.totalSpent - a.totalSpent),

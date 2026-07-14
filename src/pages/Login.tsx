@@ -1,16 +1,20 @@
 import { useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate, Link } from 'react-router-dom'
 import { Logo } from '@/components/Logo'
 import { api } from '@/lib/api'
 import { saveSession } from '@/lib/auth'
 
 export function Login() {
-  const [identifier, setIdentifier] = useState('')
+  const location = useLocation()
+  const prefillEmail =
+    typeof (location.state as { email?: string } | null)?.email === 'string'
+      ? String((location.state as { email?: string }).email)
+      : ''
+  const [identifier, setIdentifier] = useState(prefillEmail)
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const navigate = useNavigate()
-  const location = useLocation()
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()

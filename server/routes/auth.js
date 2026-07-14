@@ -60,30 +60,66 @@ async function clearDefaultAddress(db, userId, exceptId = null) {
   throwIfSupabaseError(error)
 }
 
+function userPayload(user) {
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    marketingEmailOptIn: user.marketing_email_opt_in,
+    marketingSmsOptIn: user.marketing_sms_opt_in,
+  }
+}
+
 router.post('/register', async (req, res) => {
   try {
     const { email, password, name, marketingEmailOptIn, marketingSmsOptIn, phone } = req.body
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password required' })
     }
+    if (String(password).length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters.' })
+    }
 
     const normalizedEmailValue = normalizedEmail(email)
+    const desiredName = clean(name) || null
     const db = getSupabase()
     const { data: existing, error: lookupError } = await db
       .from('app_users')
-      .select('id')
+      .select('id, email, name, password_hash, marketing_email_opt_in, marketing_sms_opt_in')
       .eq('email', normalizedEmailValue)
       .maybeSingle()
     throwIfSupabaseError(lookupError)
 
+    // Existing email: if the password matches, sign them in (and refresh username
+    // when provided) instead of a dead-end "already exists" error.
     if (existing) {
-      return res.status(400).json({ error: 'User already exists' })
+      if (!existing.password_hash || !(await bcrypt.compare(String(password), existing.password_hash))) {
+        return res.status(409).json({
+          error: 'An account with this email already exists. Please log in, or use Forgot Password.',
+          code: 'EMAIL_EXISTS',
+        })
+      }
+
+      let user = existing
+      if (desiredName && desiredName !== existing.name) {
+        const { data: updated, error: updateError } = await db
+          .from('app_users')
+          .update({ name: desiredName })
+          .eq('id', existing.id)
+          .select('id, email, name, marketing_email_opt_in, marketing_sms_opt_in')
+          .single()
+        throwIfSupabaseError(updateError)
+        user = updated
+      }
+
+      const token = createUserToken(user)
+      return res.json({ token, user: userPayload(user), existingAccount: true })
     }
 
     const hash = await bcrypt.hash(String(password), 10)
     const insertRow = {
       email: normalizedEmailValue,
-      name: clean(name) || null,
+      name: desiredName,
       password_hash: hash,
       marketing_email_opt_in: marketingEmailOptIn !== false,
       marketing_sms_opt_in: marketingSmsOptIn !== false,
@@ -102,19 +138,13 @@ router.post('/register', async (req, res) => {
     }
 
     const token = createUserToken(user)
-    res.json({
-      token,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        marketingEmailOptIn: user.marketing_email_opt_in,
-        marketingSmsOptIn: user.marketing_sms_opt_in,
-      },
-    })
+    res.json({ token, user: userPayload(user) })
   } catch (err) {
     if (err.code === '23505') {
-      return res.status(400).json({ error: 'User already exists' })
+      return res.status(409).json({
+        error: 'An account with this email already exists. Please log in, or use Forgot Password.',
+        code: 'EMAIL_EXISTS',
+      })
     }
     res.status(500).json({ error: err.message })
   }
@@ -165,16 +195,7 @@ router.post('/login', async (req, res) => {
     if (!ok) return res.status(401).json({ error: 'Invalid credentials' })
 
     const token = createUserToken(user)
-    res.json({
-      token,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        marketingEmailOptIn: user.marketing_email_opt_in,
-        marketingSmsOptIn: user.marketing_sms_opt_in,
-      },
-    })
+    res.json({ token, user: userPayload(user) })
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
