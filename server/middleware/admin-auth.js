@@ -1,6 +1,5 @@
-import crypto from 'node:crypto'
 import jwt from 'jsonwebtoken'
-import { getCurrentAccessCode } from '../services/admin-code.js'
+import { getAdminSessionExpiry, verifyAdminPassword } from '../services/admin-code.js'
 
 const ADMIN_JWT_SECRET =
   process.env.ADMIN_JWT_SECRET ||
@@ -21,17 +20,8 @@ function getAttemptRecord(ip) {
   return existing
 }
 
-function safeEqual(value, expected) {
-  const left = Buffer.from(String(value || ''))
-  const right = Buffer.from(String(expected || ''))
-  if (left.length !== right.length) return false
-  return crypto.timingSafeEqual(left, right)
-}
-
-// The admin "password" is the current rotating access code (broadcast to the
-// ops channel via /api/admin/code/notify). The issued JWT expires exactly when
-// the code rotates so a session can never outlive the code that opened it.
-export function createAdminToken(submittedCode, ip = 'unknown') {
+// Permanent ADMIN_PASSWORD gate. Issued JWT lasts 12 hours.
+export function createAdminToken(submittedPassword, ip = 'unknown') {
   const record = getAttemptRecord(ip)
   if (record.count >= MAX_ATTEMPTS) {
     const error = new Error('Too many login attempts. Try again later.')
@@ -39,33 +29,32 @@ export function createAdminToken(submittedCode, ip = 'unknown') {
     throw error
   }
 
-  const codeInfo = getCurrentAccessCode()
-  const submitted = String(submittedCode || '').trim()
-  if (!submitted || !safeEqual(submitted, codeInfo.code)) {
+  let matches = false
+  try {
+    matches = verifyAdminPassword(String(submittedPassword || '').trim())
+  } catch (configError) {
+    const error = new Error(configError.message || 'Admin password is not configured.')
+    error.statusCode = 503
+    throw error
+  }
+
+  if (!matches) {
     record.count += 1
-    const error = new Error('Invalid access code.')
+    const error = new Error('Invalid admin password.')
     error.statusCode = 401
     throw error
   }
 
   attempts.delete(ip)
 
-  const expSeconds = Math.floor(new Date(codeInfo.validTo).getTime() / 1000)
+  const expiresAt = getAdminSessionExpiry()
+  const expSeconds = Math.floor(expiresAt.getTime() / 1000)
   const nowSeconds = Math.floor(Date.now() / 1000)
-  // Refuse to issue a token with <30s of life left (would log the operator
-  // out before the dashboard finished loading); they should wait for the next
-  // rotation.
-  if (expSeconds - nowSeconds < 30) {
-    const error = new Error('Access code is about to rotate. Try again after the next broadcast.')
-    error.statusCode = 401
-    throw error
-  }
-
   const token = jwt.sign(
     { role: 'admin', exp: expSeconds, iat: nowSeconds },
     ADMIN_JWT_SECRET
   )
-  return { token, expiresAt: codeInfo.validTo }
+  return { token, expiresAt: expiresAt.toISOString() }
 }
 
 export function requireAdmin(req, res, next) {

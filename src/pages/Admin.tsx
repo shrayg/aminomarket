@@ -12,7 +12,6 @@ import {
   Eye,
   Factory,
   FileUp,
-  KeyRound,
   LogOut,
   MousePointerClick,
   PackageCheck,
@@ -78,15 +77,6 @@ type Customer = {
   shipping: { name: string; address: Address | null } | null
   billing: { name: string; address: Address | null } | null
 }
-type RotatingCode = {
-  code: string
-  bucket?: number
-  hourBucket?: number
-  validFrom: string
-  validTo: string
-  expiresInSeconds: number
-}
-
 type ChartRange = '15m' | '1h' | '1d' | '1w' | '1mo' | '1y' | 'all'
 type SeriesPoint = { bucketStart: string; bucketEnd: string; value: number }
 type RangeSeries = Record<ChartRange, SeriesPoint[]>
@@ -484,174 +474,6 @@ function StatusBadge({ value }: { value: string }) {
     <span className={`inline-flex px-2 py-1 text-[10px] font-bold uppercase tracking-wider ${tones[value] || 'bg-ink-100 text-ink-700'}`}>
       {value}
     </span>
-  )
-}
-
-function formatCountdown(seconds: number) {
-  if (seconds <= 0) return '00:00:00'
-  const h = Math.floor(seconds / 3600)
-  const m = Math.floor((seconds % 3600) / 60)
-  const s = seconds % 60
-  if (h > 0) {
-    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
-  }
-  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
-}
-
-// Decode the `exp` claim out of an admin JWT without verifying the signature
-// (that's the server's job). Used to schedule the client-side auto-logout
-// that fires the moment the access code rotates.
-function decodeJwtExpMs(token: string): number {
-  if (!token) return 0
-  try {
-    const payload = token.split('.')[1]
-    if (!payload) return 0
-    const padded = payload.replace(/-/g, '+').replace(/_/g, '/')
-    const json = JSON.parse(atob(padded))
-    return Number(json?.exp || 0) * 1000
-  } catch {
-    return 0
-  }
-}
-
-const ADMIN_LOGOUT_EVENT = 'amp-admin-force-logout'
-
-// Centralized authenticated fetch. Attaches the bearer token, normalizes JSON
-// content-type, and raises a global force-logout event on 401 so every caller
-// reacts identically when the access code rotates mid-session.
-async function adminFetch(
-  token: string,
-  input: RequestInfo,
-  init: RequestInit = {}
-): Promise<Response> {
-  const headers = new Headers(init.headers || {})
-  if (token) headers.set('Authorization', `Bearer ${token}`)
-  if (
-    init.body &&
-    !headers.has('Content-Type') &&
-    !(init.body instanceof FormData) &&
-    typeof init.body === 'string'
-  ) {
-    headers.set('Content-Type', 'application/json')
-  }
-  const res = await fetch(input, { ...init, headers })
-  if (res.status === 401) {
-    sessionStorage.removeItem('amp-admin-token')
-    window.dispatchEvent(new CustomEvent(ADMIN_LOGOUT_EVENT))
-  }
-  return res
-}
-
-function RotatingCodeCard({ token }: { token: string }) {
-  const [data, setData] = useState<RotatingCode | null>(null)
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [copied, setCopied] = useState(false)
-  const [now, setNow] = useState(Date.now())
-
-  const load = useCallback(async () => {
-    if (!token) return
-    setLoading(true)
-    setError('')
-    try {
-      const res = await adminFetch(token, '/api/admin/code')
-      const body = await res.json()
-      if (!res.ok) throw new Error(body.error || 'Could not load access code.')
-      setData(body)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not load access code.')
-    } finally {
-      setLoading(false)
-    }
-  }, [token])
-
-  useEffect(() => {
-    void load()
-  }, [load])
-
-  // Tick every second for countdown; auto-reload when the bucket rolls over.
-  useEffect(() => {
-    const interval = setInterval(() => setNow(Date.now()), 1000)
-    return () => clearInterval(interval)
-  }, [])
-
-  useEffect(() => {
-    if (!data) return
-    const expiresAt = new Date(data.validTo).getTime()
-    if (now >= expiresAt) void load()
-  }, [now, data, load])
-
-  const expiresAt = data ? new Date(data.validTo).getTime() : 0
-  const remaining = data ? Math.max(0, Math.round((expiresAt - now) / 1000)) : 0
-
-  async function copyCode() {
-    if (!data) return
-    try {
-      await navigator.clipboard.writeText(data.code)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
-    } catch {
-      // ignore
-    }
-  }
-
-  return (
-    <section className="border border-ink-900 bg-ink-950 p-5 text-white shadow-xl">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center border border-white/15 bg-white/5">
-            <KeyRound className="h-5 w-5 text-accent-light" />
-          </div>
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-accent-light">Hourly access code</p>
-            <h2 className="mt-1 text-base font-bold">Rotates hourly, auto-broadcast to the ops channel</h2>
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={() => void load()}
-          disabled={loading}
-          className="flex items-center gap-2 border border-white/20 bg-white/5 px-3 py-2 text-xs font-bold uppercase tracking-wider text-white/80 transition hover:border-white/40 hover:text-white disabled:opacity-50"
-        >
-          <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
-          Refresh
-        </button>
-      </div>
-
-      <div className="mt-5 grid gap-4 lg:grid-cols-[1fr,auto] lg:items-center">
-        <button
-          type="button"
-          onClick={() => void copyCode()}
-          disabled={!data}
-          title="Click to copy"
-          className="group flex w-full items-center justify-between gap-3 border border-white/15 bg-black/40 px-5 py-5 text-left transition hover:border-accent-light disabled:opacity-50"
-        >
-          <span className="font-mono text-3xl font-bold tracking-[0.35em] text-white sm:text-4xl">
-            {data ? data.code : '------------'}
-          </span>
-          <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-white/60 group-hover:text-accent-light">
-            {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-            {copied ? 'Copied' : 'Copy'}
-          </span>
-        </button>
-        <div className="grid gap-1 text-right">
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/50">Rotates in</p>
-          <p className="font-mono text-2xl font-bold text-white">{formatCountdown(remaining)}</p>
-          {data && (
-            <p className="text-[10px] text-white/40">
-              Next reset{' '}
-              {new Date(data.validTo).toLocaleString([], {
-                weekday: 'short',
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-            </p>
-          )}
-        </div>
-      </div>
-
-      {error && <p className="mt-3 text-xs text-rose-300">{error}</p>}
-    </section>
   )
 }
 
@@ -1508,6 +1330,47 @@ function UsersTab({ token }: { token: string }) {
   )
 }
 
+function decodeJwtExpMs(token: string): number {
+  if (!token) return 0
+  try {
+    const payload = token.split('.')[1]
+    if (!payload) return 0
+    const padded = payload.replace(/-/g, '+').replace(/_/g, '/')
+    const json = JSON.parse(atob(padded))
+    return Number(json?.exp || 0) * 1000
+  } catch {
+    return 0
+  }
+}
+
+const ADMIN_LOGOUT_EVENT = 'amp-admin-force-logout'
+
+// Centralized authenticated fetch. Attaches the bearer token, normalizes JSON
+// content-type, and raises a global force-logout event on 401 so every caller
+// reacts identically when the admin session expires.
+async function adminFetch(
+  token: string,
+  input: RequestInfo,
+  init: RequestInit = {}
+): Promise<Response> {
+  const headers = new Headers(init.headers || {})
+  if (token) headers.set('Authorization', `Bearer ${token}`)
+  if (
+    init.body &&
+    !headers.has('Content-Type') &&
+    !(init.body instanceof FormData) &&
+    typeof init.body === 'string'
+  ) {
+    headers.set('Content-Type', 'application/json')
+  }
+  const res = await fetch(input, { ...init, headers })
+  if (res.status === 401) {
+    sessionStorage.removeItem('amp-admin-token')
+    window.dispatchEvent(new CustomEvent(ADMIN_LOGOUT_EVENT))
+  }
+  return res
+}
+
 function AdminLogin({ onLogin }: { onLogin: (password: string) => Promise<void> }) {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -1535,22 +1398,21 @@ function AdminLogin({ onLogin }: { onLogin: (password: string) => Promise<void> 
         </p>
         <h1 className="mt-2 text-2xl font-bold text-ink-900">Admin dashboard</h1>
         <p className="mt-2 text-sm leading-relaxed text-ink-500">
-          Sign in with the current hourly access code from the ops channel. The code rotates every
-          hour and your session ends the moment it expires.
+          Sign in with the permanent admin password. Sessions last 12 hours.
         </p>
         <label className="mt-6 block">
           <span className="text-xs font-bold uppercase tracking-wider text-ink-500">
-            Hourly access code
+            Admin password
           </span>
           <input
             type="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             autoFocus
-            autoComplete="off"
+            autoComplete="current-password"
             spellCheck={false}
-            placeholder="12-character access code"
-            className="mt-2 w-full border border-ink-200 px-3 py-3 font-mono text-sm tracking-[0.2em] outline-none transition focus:border-ink-600"
+            placeholder="Enter admin password"
+            className="mt-2 w-full border border-ink-200 px-3 py-3 font-mono text-sm outline-none transition focus:border-ink-600"
           />
         </label>
         {error && <p className="mt-3 text-sm text-rose-700">{error}</p>}
@@ -1588,11 +1450,11 @@ export function Admin() {
   }, [])
 
   // Listen for forced logouts triggered anywhere in the tree by adminFetch on a
-  // 401 response (typically: access code rotated mid-session).
+  // 401 response (typically: 12h session expired).
   useEffect(() => {
     function onForce() {
       logout()
-      setError('Your session ended because the access code rotated. Sign in with the new hourly code.')
+      setError('Your session expired. Sign in again.')
     }
     window.addEventListener(ADMIN_LOGOUT_EVENT, onForce)
     return () => window.removeEventListener(ADMIN_LOGOUT_EVENT, onForce)
@@ -1607,7 +1469,7 @@ export function Admin() {
     if (!expMs) return
     const fire = () => {
       logout()
-      setError('Your session expired. Sign in with the latest hourly access code.')
+      setError('Your session expired. Sign in again.')
     }
     const msLeft = expMs - Date.now()
     if (msLeft <= 0) {
@@ -1788,11 +1650,6 @@ export function Admin() {
           <p className="py-24 text-center text-sm text-ink-500">Loading operations data...</p>
         ) : (
           <>
-            {activeTab === 'overview' && (
-              <div className="mt-6">
-                <RotatingCodeCard token={token} />
-              </div>
-            )}
             {activeTab === 'overview' && analytics && stripe && (
               <div className="mt-6 space-y-6">
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

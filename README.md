@@ -7,12 +7,8 @@ Full-stack e-commerce: **Vite + React + Tailwind** frontend and **Node.js/Expres
 1. Push to GitHub and import the repo in [Vercel](https://vercel.com).
 
 2. Add environment variables in Vercel project settings:
+   - `ADMIN_PASSWORD` - permanent admin login password (min 16 characters)
    - `ADMIN_JWT_SECRET` - random signing secret for admin session JWTs
-   - `ADMIN_CODE_SECRET` - HMAC key used to derive the rotating admin access code
-   - `CRON_SECRET` - shared secret used by Supabase `pg_cron` to authenticate
-     to `/api/admin/code/notify` (must match the value stored in Supabase
-     Vault as `amp_admin_cron_secret` - see step 3 below)
-   - `DISCORD_ADMIN_WEBHOOK_URL` - private Discord webhook that receives the rotating admin code
    - `SUPABASE_URL` - Supabase project URL
    - `SUPABASE_ANON_KEY` - Supabase publishable legacy anon key
    - `SUPABASE_SERVICE_ROLE_KEY` - Supabase server-only service-role key
@@ -33,29 +29,6 @@ Full-stack e-commerce: **Vite + React + Tailwind** frontend and **Node.js/Expres
    npm run db:push
    ```
 
-   Then in the Supabase SQL editor, store the cron secret + base URL in Vault
-   (one-time, secrets are not in git):
-
-   ```sql
-   select vault.create_secret(
-     '<your CRON_SECRET value, must match Vercel env>',
-     'amp_admin_cron_secret',
-     'Bearer token used by pg_cron to call /api/admin/code/notify'
-   );
-
-   select vault.create_secret(
-     'https://aminomarket.shop',
-     'amp_admin_base_url',
-     'Origin used by pg_cron when calling the admin notify endpoint'
-   );
-   ```
-
-   `pg_cron` will then POST to `/api/admin/code/notify` every hour on the
-   hour, which derives the current rotating admin code (HMAC of
-   `ADMIN_CODE_SECRET` x current UTC hour bucket) and publishes it to
-   `DISCORD_ADMIN_WEBHOOK_URL`. Vercel cron is no longer used for this -
-   the Hobby plan caps Vercel crons at once per day.
-
 4. Deploy. Vercel builds the frontend and deploys the Express API as serverless functions.
 
 ## Local Development
@@ -68,12 +41,10 @@ SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 JWT_SECRET=dev-secret
 ADMIN_JWT_SECRET=dev-admin-secret
-ADMIN_CODE_SECRET=dev-admin-code-hmac-key
-CRON_SECRET=dev-cron-secret
+ADMIN_PASSWORD=change-me-16chars!
 FRONTEND_URL=http://localhost:5173
 STRIPE_SECRET_KEY=sk_...
 STRIPE_WEBHOOK_SECRET=whsec_...
-DISCORD_ADMIN_WEBHOOK_URL=https://discord.com/api/webhooks/...
 DISCORD_SIGNUPS_WEBHOOK_URL=https://discord.com/api/webhooks/...
 DISCORD_PAYMENTS_WEBHOOK_URL=https://discord.com/api/webhooks/...
 DISCORD_FULFILLMENT_WEBHOOK_URL=https://discord.com/api/webhooks/...
@@ -99,14 +70,8 @@ npm run dev
 
 Open http://localhost:5173. The Vite dev server proxies `/api` to the backend.
 
-The internal dashboard is available at http://localhost:5173/admin. There is no static
-admin password &mdash; login is gated by a rotating hourly access code derived from
-`ADMIN_CODE_SECRET` (HMAC of the current UTC hour bucket). The code is published to
-`DISCORD_ADMIN_WEBHOOK_URL` every hour by Supabase `pg_cron`, which POSTs to
-`/api/admin/code/notify` with the `CRON_SECRET` Bearer token (configuration lives in
-`supabase/migrations/20260601230000_admin_code_hourly_broadcast.sql`). Issued admin
-JWTs expire when the current code rotates, so the dashboard auto-logs out at the
-boundary.
+The internal dashboard is at http://localhost:5173/admin. Sign in with the permanent
+`ADMIN_PASSWORD` from your env. Sessions last 12 hours.
 
 ## Stack
 

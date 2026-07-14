@@ -11,7 +11,7 @@ import {
   parseBatchFromNote,
   saveFulfillment,
 } from '../services/analytics-store.js'
-import { getCurrentAccessCode, postCodeToDiscord } from '../services/admin-code.js'
+import { postCodeToDiscord } from '../services/admin-code.js'
 import { postManufactureBatch } from '../services/manufacture-discord.js'
 import { approveAffiliate, denyAffiliate } from '../services/affiliate.js'
 import { getSupabase, throwIfSupabaseError } from '../lib/supabase.js'
@@ -480,15 +480,13 @@ function cronOrAdmin(req, res, next) {
 }
 
 router.get('/code', requireAdmin, (_req, res) => {
-  res.json(getCurrentAccessCode())
+  res.json({ permanent: true, rotation: false })
 })
 
-// Hit by an external hourly cron (Supabase pg_cron) authenticated with
-// CRON_SECRET via the Authorization header.
+// Hourly Discord broadcasts retired — permanent ADMIN_PASSWORD is used instead.
 async function notifyHandler(_req, res) {
-  const codeInfo = getCurrentAccessCode()
-  const delivery = await postCodeToDiscord(codeInfo)
-  res.json({ ...codeInfo, delivery })
+  const delivery = await postCodeToDiscord()
+  res.json({ disabled: true, permanent: true, delivery })
 }
 
 router.get('/code/notify', cronOrAdmin, notifyHandler)

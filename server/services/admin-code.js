@@ -1,92 +1,52 @@
 import crypto from 'node:crypto'
 
-// 62-char URL-safe alphanumeric. Slight modulo bias is acceptable for a
-// 12-char display code that rotates each hour.
-const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-const CODE_LENGTH = 12
-const HOUR_MS = 60 * 60 * 1000
+const PASSWORD_LENGTH = 16
+const SESSION_MS = 12 * 60 * 60 * 1000
 
-function getSecret() {
-  return (
-    process.env.ADMIN_CODE_SECRET ||
-    process.env.ADMIN_JWT_SECRET ||
-    process.env.JWT_SECRET ||
-    'change-admin-code-secret-before-deploy'
-  )
+function getConfiguredPassword() {
+  const password = String(process.env.ADMIN_PASSWORD || '').trim()
+  if (!password) {
+    throw new Error('ADMIN_PASSWORD is not configured')
+  }
+  if (password.length < PASSWORD_LENGTH) {
+    throw new Error(`ADMIN_PASSWORD must be at least ${PASSWORD_LENGTH} characters`)
+  }
+  return password
 }
 
-export function hourBucket(date = new Date()) {
-  return Math.floor(date.getTime() / HOUR_MS)
+export function getPermanentAdminPassword() {
+  return getConfiguredPassword()
 }
 
-// Back-compat aliases so older imports (dayBucket) still resolve.
-export const dayBucket = hourBucket
-
+// Shape kept compatible with older admin UI/helpers that expected a code object.
 export function getCurrentAccessCode(date = new Date()) {
-  const bucket = hourBucket(date)
-  const hmac = crypto
-    .createHmac('sha256', getSecret())
-    .update(`amp-admin-code:${bucket}`)
-    .digest()
-
-  let code = ''
-  for (let i = 0; i < CODE_LENGTH; i += 1) {
-    code += ALPHABET[hmac[i] % ALPHABET.length]
-  }
-
-  const validFrom = new Date(bucket * HOUR_MS)
-  const validTo = new Date((bucket + 1) * HOUR_MS)
+  const password = getConfiguredPassword()
+  const validFrom = new Date(0).toISOString()
+  const validTo = new Date(date.getTime() + SESSION_MS).toISOString()
   return {
-    code,
-    bucket,
-    hourBucket: bucket,
-    validFrom: validFrom.toISOString(),
-    validTo: validTo.toISOString(),
-    expiresInSeconds: Math.max(0, Math.round((validTo.getTime() - date.getTime()) / 1000)),
+    code: password,
+    permanent: true,
+    validFrom,
+    validTo,
+    expiresInSeconds: Math.round(SESSION_MS / 1000),
   }
 }
 
-// Back-compat: older callers import getCurrentHourCode.
 export const getCurrentHourCode = getCurrentAccessCode
 
-export async function postCodeToDiscord(codeInfo) {
-  const url = process.env.DISCORD_ADMIN_WEBHOOK_URL
-  if (!url) {
-    return { sent: false, reason: 'DISCORD_ADMIN_WEBHOOK_URL is not configured' }
-  }
+export function verifyAdminPassword(submitted) {
+  const expected = getConfiguredPassword()
+  const left = Buffer.from(String(submitted || ''))
+  const right = Buffer.from(expected)
+  if (left.length !== right.length) return false
+  return crypto.timingSafeEqual(left, right)
+}
 
-  const expireUnix = Math.floor(new Date(codeInfo.validTo).getTime() / 1000)
-  const body = {
-    username: 'Strand Labs admin',
-    embeds: [
-      {
-        title: 'Hourly admin access code',
-        description: `\`\`\`\n${codeInfo.code}\n\`\`\``,
-        color: 0xa78bfa,
-        fields: [
-          {
-            name: 'Valid until',
-            value: `<t:${expireUnix}:t> (<t:${expireUnix}:R>)`,
-            inline: false,
-          },
-        ],
-        timestamp: new Date().toISOString(),
-      },
-    ],
-  }
+export function getAdminSessionExpiry(date = new Date()) {
+  return new Date(date.getTime() + SESSION_MS)
+}
 
-  try {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    })
-    if (!res.ok) {
-      const text = await res.text().catch(() => '')
-      return { sent: false, status: res.status, reason: text || 'Discord rejected the payload' }
-    }
-    return { sent: true, status: res.status }
-  } catch (err) {
-    return { sent: false, reason: err.message || 'Discord fetch failed' }
-  }
+// Discord hourly broadcasts are retired; notify endpoint returns this as a no-op.
+export async function postCodeToDiscord() {
+  return { sent: false, reason: 'Hourly admin-code broadcasts are disabled; using permanent ADMIN_PASSWORD' }
 }
