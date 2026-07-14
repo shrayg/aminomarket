@@ -19,7 +19,7 @@ const testimonials = [
     title: 'Verified Buyer',
   },
   {
-    text: 'Ordered the 2-pack. Consistent quality and shipping was fast.',
+    text: 'Ordered the shampoo and conditioner. Consistent quality and shipping was fast.',
     author: 'Sam',
     title: 'Verified Buyer',
   },
